@@ -11,6 +11,51 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import { products, sellers, adminUsers, categories } from "@/data/mock-data";
+import {
+  AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from "recharts";
+
+const REVENUE_TREND = [
+  { month: "Aug", revenue: 312000, users: 980, orders: 1240 },
+  { month: "Sep", revenue: 415000, users: 1120, orders: 1580 },
+  { month: "Oct", revenue: 528000, users: 1340, orders: 1890 },
+  { month: "Nov", revenue: 691000, users: 1580, orders: 2310 },
+  { month: "Dec", revenue: 834000, users: 1920, orders: 2870 },
+  { month: "Jan", revenue: 756000, users: 1750, orders: 2560 },
+  { month: "Feb", revenue: 892000, users: 2100, orders: 3120 },
+  { month: "Mar", revenue: 987000, users: 2340, orders: 3450 },
+];
+
+const CATEGORY_CHART_DATA = [
+  { name: "Electronics", sales: 342, revenue: 342000 },
+  { name: "Cars", sales: 285, revenue: 285000 },
+  { name: "Fashion", sales: 198, revenue: 198000 },
+  { name: "Coffee", sales: 145, revenue: 145000 },
+  { name: "Jewelry", sales: 112, revenue: 112000 },
+  { name: "Shoes", sales: 89, revenue: 89000 },
+  { name: "Bags", sales: 67, revenue: 67000 },
+];
+
+const STATUS_PIE = [
+  { name: "Approved", value: 38, color: "#22c55e" },
+  { name: "Pending", value: 2, color: "#f59e0b" },
+  { name: "Rejected", value: 2, color: "#ef4444" },
+];
+
+const AdminTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-lg p-3 shadow-lg text-xs font-body">
+        <p className="font-semibold text-foreground mb-1">{label}</p>
+        {payload.map((p: any, i: number) => (
+          <p key={i} style={{ color: p.color }}>{p.name}: {typeof p.value === "number" && p.value > 10000 ? `${(p.value / 1000).toFixed(0)}K ETB` : p.value}</p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 const TABS = [
   { id: "overview", label: "Overview", icon: BarChart3 },
@@ -39,25 +84,43 @@ const StatCard = ({ label, value, change, icon: Icon, color }: { label: string; 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [productSearch, setProductSearch] = useState("");
+  const [productStatusFilter, setProductStatusFilter] = useState("all");
   const [userSearch, setUserSearch] = useState("");
   const [productStatuses, setProductStatuses] = useState<Record<string, string>>({});
   const [sellerStatuses, setSellerStatuses] = useState<Record<string, string>>({});
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectMessage, setRejectMessage] = useState("Please upload clearer product images and correct the description.");
 
   const pendingProducts = products.filter(p => (productStatuses[p.id] || p.status) === "pending");
   const approvedProducts = products.filter(p => (productStatuses[p.id] || p.status) === "approved");
 
   const handleProductAction = (id: string, action: "approved" | "rejected") => {
+    if (action === "rejected") {
+      setRejectingId(id);
+      return;
+    }
     setProductStatuses(prev => ({ ...prev, [id]: action }));
+  };
+
+  const confirmReject = () => {
+    if (rejectingId) {
+      setProductStatuses(prev => ({ ...prev, [rejectingId]: "rejected" }));
+      setRejectingId(null);
+      setRejectMessage("Please upload clearer product images and correct the description.");
+    }
   };
 
   const handleSellerAction = (id: string, action: string) => {
     setSellerStatuses(prev => ({ ...prev, [id]: action }));
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    p.category.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const currentStatus = productStatuses[p.id] || p.status || "approved";
+    const matchesSearch = p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.category.toLowerCase().includes(productSearch.toLowerCase());
+    const matchesFilter = productStatusFilter === "all" || currentStatus === productStatusFilter;
+    return matchesSearch && matchesFilter;
+  });
 
   const filteredUsers = adminUsers.filter(u =>
     u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
@@ -214,41 +277,96 @@ const AdminPanel = () => {
               {/* PRODUCTS */}
               {activeTab === "products" && (
                 <motion.div key="products" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                  {/* Rejection Dialog */}
+                  <AnimatePresence>
+                    {rejectingId && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-foreground/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4"
+                      >
+                        <motion.div
+                          initial={{ scale: 0.95, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.95, opacity: 0 }}
+                          className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl"
+                          data-testid="rejection-dialog"
+                        >
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                              <X className="w-5 h-5 text-destructive" />
+                            </div>
+                            <div>
+                              <h3 className="font-display font-bold text-lg text-foreground">Reject Product</h3>
+                              <p className="text-xs text-muted-foreground font-body">Send a correction message to the seller</p>
+                            </div>
+                          </div>
+                          <div className="mb-4">
+                            <label className="text-xs font-body font-semibold text-foreground mb-2 block">Message to Seller</label>
+                            <textarea
+                              value={rejectMessage}
+                              onChange={e => setRejectMessage(e.target.value)}
+                              rows={4}
+                              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm font-body focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                              data-testid="reject-message-input"
+                            />
+                            <p className="text-xs text-muted-foreground font-body mt-1">This message will be sent as a notification to the seller.</p>
+                          </div>
+                          <div className="flex gap-3">
+                            <Button variant="outline" className="flex-1" onClick={() => setRejectingId(null)} data-testid="cancel-reject-btn">Cancel</Button>
+                            <Button variant="destructive" className="flex-1 gap-1.5" onClick={confirmReject} data-testid="confirm-reject-btn">
+                              <X className="w-4 h-4" /> Reject & Notify
+                            </Button>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div className="bg-card rounded-xl p-5 shadow-card">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                       <h3 className="font-display font-bold text-lg text-foreground">Product Management</h3>
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                          <input
-                            type="text"
-                            placeholder="Search products..."
-                            value={productSearch}
-                            onChange={e => setProductSearch(e.target.value)}
-                            className="h-9 pl-9 pr-3 rounded-lg border border-input bg-background text-xs font-body focus:outline-none focus:ring-2 focus:ring-ring w-48"
-                            data-testid="product-search-input"
-                          />
-                        </div>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Search products..."
+                          value={productSearch}
+                          onChange={e => setProductSearch(e.target.value)}
+                          className="h-9 pl-9 pr-3 rounded-lg border border-input bg-background text-xs font-body focus:outline-none focus:ring-2 focus:ring-ring w-48"
+                          data-testid="product-search-input"
+                        />
                       </div>
                     </div>
 
-                    {/* Tabs within products */}
+                    {/* Clickable Status Filters */}
                     <div className="flex gap-2 mb-4 flex-wrap">
-                      {["all", "pending", "approved", "rejected"].map(status => {
-                        const count = status === "all" ? products.length : products.filter(p => (productStatuses[p.id] || p.status) === status).length;
-                        return (
-                          <Badge
-                            key={status}
-                            variant="outline"
-                            className={`cursor-pointer capitalize font-body ${status === "pending" ? "border-warning text-warning" : status === "approved" ? "border-success text-success" : status === "rejected" ? "border-destructive text-destructive" : ""}`}
-                          >
-                            {status} ({count})
-                          </Badge>
-                        );
-                      })}
+                      {[
+                        { key: "all", label: "All", count: products.length, cls: "" },
+                        { key: "approved", label: "Active", count: products.filter(p => (productStatuses[p.id] || p.status) === "approved").length, cls: "border-success text-success" },
+                        { key: "pending", label: "Pending", count: products.filter(p => (productStatuses[p.id] || p.status) === "pending").length, cls: "border-warning text-warning" },
+                        { key: "rejected", label: "Rejected", count: products.filter(p => (productStatuses[p.id] || p.status) === "rejected").length, cls: "border-destructive text-destructive" },
+                      ].map(f => (
+                        <button
+                          key={f.key}
+                          onClick={() => setProductStatusFilter(f.key)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-colors border ${
+                            productStatusFilter === f.key
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : `${f.cls || "border-border text-muted-foreground"} hover:bg-muted`
+                          }`}
+                          data-testid={`product-status-filter-${f.key}`}
+                        >
+                          {f.label} ({f.count})
+                        </button>
+                      ))}
                     </div>
 
                     <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                      {filteredProducts.length === 0 && (
+                        <p className="text-center py-8 text-muted-foreground font-body text-sm">No products found</p>
+                      )}
                       {filteredProducts.map(p => {
                         const currentStatus = productStatuses[p.id] || p.status || "approved";
                         return (
@@ -259,7 +377,7 @@ const AdminPanel = () => {
                               <p className="text-xs text-muted-foreground font-body">{p.category} • {p.seller} • {p.location}</p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <span className="font-display font-bold text-sm text-primary">{p.price.toLocaleString()} ETB</span>
+                              <span className="font-display font-bold text-sm text-primary hidden md:block">{p.price.toLocaleString()} ETB</span>
                               <Badge
                                 className={`text-xs font-body capitalize ${
                                   currentStatus === "approved" ? "bg-success/10 text-success border-success/20" :
@@ -268,15 +386,15 @@ const AdminPanel = () => {
                                 }`}
                                 variant="outline"
                               >
-                                {currentStatus}
+                                {currentStatus === "approved" ? "active" : currentStatus}
                               </Badge>
                               {currentStatus === "pending" && (
                                 <div className="flex gap-1">
-                                  <Button size="sm" variant="default" className="h-7 text-xs" onClick={() => handleProductAction(p.id, "approved")} data-testid={`approve-${p.id}`}>
-                                    <Check className="w-3 h-3" />
+                                  <Button size="sm" variant="default" className="h-7 text-xs gap-1" onClick={() => handleProductAction(p.id, "approved")} data-testid={`approve-${p.id}`}>
+                                    <Check className="w-3 h-3" /> Approve
                                   </Button>
-                                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => handleProductAction(p.id, "rejected")} data-testid={`reject-${p.id}`}>
-                                    <X className="w-3 h-3" />
+                                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1 text-destructive border-destructive hover:bg-destructive hover:text-white" onClick={() => handleProductAction(p.id, "rejected")} data-testid={`reject-${p.id}`}>
+                                    <X className="w-3 h-3" /> Reject
                                   </Button>
                                 </div>
                               )}
@@ -507,58 +625,151 @@ const AdminPanel = () => {
               {/* ANALYTICS */}
               {activeTab === "analytics" && (
                 <motion.div key="analytics" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+                  {/* Time Filter */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {["Today", "Yesterday", "Last 7 Days", "Last 30 Days", "This Month", "This Year"].map(f => (
+                      <button
+                        key={f}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-colors border ${f === "This Month" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground border-border hover:bg-muted"}`}
+                        data-testid={`admin-time-filter-${f.toLowerCase().replace(/\s+/g, "-")}`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                    <button className="px-3 py-1.5 rounded-lg text-xs font-body font-medium transition-colors border border-border bg-card text-muted-foreground hover:bg-muted ml-1">
+                      Custom Range
+                    </button>
+                  </div>
+
+                  {/* KPI stats */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard label="Monthly Revenue" value="892K ETB" change="↑ 23% vs last month" icon={TrendingUp} color="bg-success" />
-                    <StatCard label="New Users" value="1,234" change="↑ 8% this week" icon={Users} color="bg-blue-500" />
+                    <StatCard label="Monthly Revenue" value="987K ETB" change="↑ 23% vs last month" icon={TrendingUp} color="bg-success" />
+                    <StatCard label="New Users" value="2,340" change="↑ 8% this week" icon={Users} color="bg-blue-500" />
                     <StatCard label="Conversion Rate" value="3.8%" change="↑ 0.4% this month" icon={Activity} color="bg-warning" />
-                    <StatCard label="Avg Order Value" value="2,450 ETB" change="↑ 12% this month" icon={DollarSign} color="bg-teal-DEFAULT" />
+                    <StatCard label="Avg Order Value" value="2,450 ETB" change="↑ 12% this month" icon={DollarSign} color="bg-purple-500" />
+                  </div>
+
+                  {/* Revenue Area Chart */}
+                  <div className="bg-card rounded-xl p-5 shadow-card">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="font-display font-bold text-base text-foreground">Revenue Trend</h3>
+                        <p className="text-xs text-muted-foreground font-body">Last 8 months</p>
+                      </div>
+                      <Button size="sm" variant="outline" className="gap-1.5 text-xs h-8">
+                        <Download className="w-3.5 h-3.5" /> Export CSV
+                      </Button>
+                    </div>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <AreaChart data={REVENUE_TREND} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="adminRevGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(186,47%,25%)" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(186,47%,25%)" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="adminOrderGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(43,56%,52%)" stopOpacity={0.25} />
+                            <stop offset="95%" stopColor="hsl(43,56%,52%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: "DM Sans" }} />
+                        <YAxis tick={{ fontSize: 11, fontFamily: "DM Sans" }} tickFormatter={v => `${(v/1000).toFixed(0)}K`} />
+                        <Tooltip content={<AdminTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: 11, fontFamily: "DM Sans" }} />
+                        <Area type="monotone" dataKey="revenue" name="Revenue (ETB)" stroke="hsl(186,47%,25%)" fill="url(#adminRevGrad)" strokeWidth={2} />
+                        <Area type="monotone" dataKey="orders" name="Orders" stroke="hsl(43,56%,52%)" fill="url(#adminOrderGrad)" strokeWidth={2} />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Category Bar Chart */}
                     <div className="bg-card rounded-xl p-5 shadow-card">
-                      <h3 className="font-display font-bold text-base text-foreground mb-4">Top Categories by Revenue</h3>
-                      <div className="space-y-3">
-                        {[
-                          { name: "Electronics", revenue: 342000, pct: 85 },
-                          { name: "Cars", revenue: 285000, pct: 71 },
-                          { name: "Fashion", revenue: 198000, pct: 49 },
-                          { name: "Coffee", revenue: 145000, pct: 36 },
-                          { name: "Jewelry", revenue: 112000, pct: 28 },
-                        ].map(cat => (
-                          <div key={cat.name}>
-                            <div className="flex items-center justify-between text-xs font-body mb-1">
-                              <span className="text-foreground font-medium">{cat.name}</span>
-                              <span className="text-muted-foreground">{cat.revenue.toLocaleString()} ETB</span>
-                            </div>
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
-                              <div className="h-full gradient-teal rounded-full transition-all" style={{ width: `${cat.pct}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      <h3 className="font-display font-bold text-base text-foreground mb-4">Top Categories by Sales</h3>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={CATEGORY_CHART_DATA} layout="vertical" margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                          <XAxis type="number" tick={{ fontSize: 10, fontFamily: "DM Sans" }} />
+                          <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fontFamily: "DM Sans" }} width={75} />
+                          <Tooltip content={<AdminTooltip />} />
+                          <Bar dataKey="sales" name="Sales" fill="hsl(186,47%,25%)" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
 
-                    <div className="bg-card rounded-xl p-5 shadow-card">
-                      <h3 className="font-display font-bold text-base text-foreground mb-4">System Activity Log</h3>
-                      <div className="space-y-3 max-h-64 overflow-y-auto">
-                        {[
-                          { action: "New seller registered", detail: "Ethiopian Crafts Co.", time: "2 min ago", icon: Users },
-                          { action: "Product approved", detail: "Samsung Galaxy A54 5G", time: "8 min ago", icon: Check },
-                          { action: "Order placed", detail: "Order #45,671 - 3,500 ETB", time: "12 min ago", icon: Package },
-                          { action: "User blocked", detail: "meron.a@gmail.com", time: "25 min ago", icon: Ban },
-                          { action: "Product rejected", detail: "Suspicious accessory listing", time: "34 min ago", icon: X },
-                          { action: "Category added", detail: "Gifts subcategory: Occasions", time: "1 hour ago", icon: Tag },
-                        ].map((log, i) => (
-                          <div key={i} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
-                            <div className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <log.icon className="w-3.5 h-3.5 text-muted-foreground" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-body font-medium text-foreground">{log.action}</p>
-                              <p className="text-xs text-muted-foreground font-body">{log.detail} • {log.time}</p>
-                            </div>
+                    {/* Product Status Donut + User Growth */}
+                    <div className="space-y-4">
+                      <div className="bg-card rounded-xl p-5 shadow-card">
+                        <h3 className="font-display font-bold text-base text-foreground mb-3">Product Status Distribution</h3>
+                        <div className="flex items-center gap-4">
+                          <ResponsiveContainer width={120} height={120}>
+                            <PieChart>
+                              <Pie data={STATUS_PIE} innerRadius={35} outerRadius={55} dataKey="value" paddingAngle={4}>
+                                {STATUS_PIE.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="flex-1 space-y-2">
+                            {STATUS_PIE.map(d => (
+                              <div key={d.name} className="flex items-center justify-between text-xs font-body">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
+                                  <span className="text-foreground">{d.name}</span>
+                                </div>
+                                <span className="font-semibold text-foreground">{d.value} products</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-card rounded-xl p-5 shadow-card">
+                        <h3 className="font-display font-bold text-base text-foreground mb-3">User Growth</h3>
+                        <ResponsiveContainer width="100%" height={90}>
+                          <LineChart data={REVENUE_TREND}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                            <XAxis dataKey="month" tick={{ fontSize: 10, fontFamily: "DM Sans" }} />
+                            <YAxis tick={{ fontSize: 10, fontFamily: "DM Sans" }} />
+                            <Tooltip content={<AdminTooltip />} />
+                            <Line type="monotone" dataKey="users" name="Users" stroke="#3b82f6" strokeWidth={2} dot={{ r: 2 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Report Generation */}
+                  <div className="bg-card rounded-xl p-5 shadow-card">
+                    <h3 className="font-display font-bold text-base text-foreground mb-4">Generate Reports</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <select className="h-9 px-3 rounded-lg border border-input bg-background text-sm font-body focus:outline-none focus:ring-2 focus:ring-ring col-span-1 md:col-span-1">
+                        <option>Sales Report</option>
+                        <option>Seller Performance</option>
+                        <option>Product Activity</option>
+                        <option>User Growth</option>
+                      </select>
+                      <select className="h-9 px-3 rounded-lg border border-input bg-background text-sm font-body focus:outline-none focus:ring-2 focus:ring-ring">
+                        <option>This Month</option>
+                        <option>Last Month</option>
+                        <option>Last 7 Days</option>
+                        <option>Last Year</option>
+                        <option>Custom Range</option>
+                      </select>
+                      <select className="h-9 px-3 rounded-lg border border-input bg-background text-sm font-body focus:outline-none focus:ring-2 focus:ring-ring">
+                        <option>All Categories</option>
+                        {["Electronics", "Cars", "Fashion", "Coffee", "Jewelry"].map(c => <option key={c}>{c}</option>)}
+                      </select>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" data-testid="export-csv-btn">
+                          <Download className="w-3.5 h-3.5" /> CSV
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" data-testid="export-pdf-btn">
+                          <Download className="w-3.5 h-3.5" /> PDF
+                        </Button>
+                        <Button variant="gold" size="sm" className="flex-1 gap-1.5 text-xs" data-testid="generate-report-btn">
+                          Generate
+                        </Button>
                       </div>
                     </div>
                   </div>

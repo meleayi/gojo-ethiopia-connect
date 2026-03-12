@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import ReviewCard from "@/components/ReviewCard";
+import ChatModal from "@/components/ChatModal";
 import { products, reviews } from "@/data/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,6 +25,7 @@ const ProductDetail = () => {
   const [wishlisted, setWishlisted] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [activeTab, setActiveTab] = useState<"specs" | "reviews" | "shipping">("specs");
+  const [chatOpen, setChatOpen] = useState(false);
   const recRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -283,7 +285,7 @@ const ProductDetail = () => {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" data-testid="message-seller-btn">
+                <Button variant="outline" size="sm" data-testid="message-seller-btn" onClick={() => setChatOpen(true)}>
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Chat
                 </Button>
                 <Button variant="outline" size="sm" data-testid="visit-store-btn">
@@ -437,6 +439,14 @@ const ProductDetail = () => {
         </section>
       </div>
       <Footer />
+
+      <ChatModal
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        sellerName={product.seller}
+        productName={product.name}
+        sellerInitial={product.seller.charAt(0).toUpperCase() + (product.seller.split(" ")[1]?.charAt(0).toUpperCase() || "")}
+      />
     </div>
   );
 };

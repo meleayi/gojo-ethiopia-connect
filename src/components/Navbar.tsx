@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, Heart, User, Menu, X, MapPin, Globe, Sun, Moon, ChevronDown } from "lucide-react";
+import { Search, ShoppingCart, Heart, User, Menu, X, MapPin, Globe, Sun, Moon, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 import { useTheme } from "./ThemeProvider";
-import { categories } from "@/data/mock-data";
+import NotificationPanel from "./NotificationPanel";
+import { MOCK_NOTIFICATIONS } from "./NotificationPanel";
 
 const CATEGORY_NAV = [
   { label: "Electronics", path: "/products?category=Electronics" },
@@ -21,9 +22,11 @@ const CATEGORY_NAV = [
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [showCategories, setShowCategories] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+
+  const unreadCount = MOCK_NOTIFICATIONS.filter(n => !n.read).length;
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -38,6 +41,7 @@ const Navbar = () => {
 
   useEffect(() => {
     setIsOpen(false);
+    setNotifOpen(false);
   }, [location.pathname]);
 
   const navLinks = [
@@ -95,14 +99,7 @@ const Navbar = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-1 ml-auto">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="hidden md:flex"
-              data-testid="theme-toggle"
-              title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-            >
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden md:flex" data-testid="theme-toggle">
               {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSearchOpen(true)} data-testid="mobile-search-btn">
@@ -120,6 +117,28 @@ const Navbar = () => {
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-secondary text-secondary-foreground text-[10px] font-bold flex items-center justify-center">2</span>
               </Button>
             </Link>
+
+            {/* Notifications */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                onClick={() => setNotifOpen(prev => !prev)}
+                data-testid="notification-bell"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                    {unreadCount}
+                  </span>
+                )}
+              </Button>
+              <div className="absolute right-0 top-full">
+                <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
+              </div>
+            </div>
+
             <Link to="/dashboard" data-testid="nav-account">
               <Button variant="ghost" size="icon">
                 <User className="w-5 h-5" />
@@ -133,7 +152,7 @@ const Navbar = () => {
 
         {/* Category Nav */}
         <nav className="hidden md:block border-t border-border">
-          <div className="container flex items-center gap-1 py-1.5 overflow-x-auto scrollbar-hide">
+          <div className="container flex items-center gap-1 py-1.5 overflow-x-auto">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
@@ -158,11 +177,7 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="w-px h-5 bg-border mx-1 flex-shrink-0" />
-            <Link
-              to="/admin"
-              className="flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              data-testid="nav-admin"
-            >
+            <Link to="/admin" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors" data-testid="nav-admin">
               Admin
             </Link>
           </div>
@@ -192,11 +207,7 @@ const Navbar = () => {
                 <div className="border-t border-border pt-2 mt-2">
                   <p className="text-xs text-muted-foreground font-body font-semibold uppercase tracking-wide px-3 mb-1">Categories</p>
                   {CATEGORY_NAV.map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="block px-3 py-2 rounded-lg text-sm font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-                    >
+                    <Link key={item.path} to={item.path} className="block px-3 py-2 rounded-lg text-sm font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors">
                       {item.label}
                     </Link>
                   ))}

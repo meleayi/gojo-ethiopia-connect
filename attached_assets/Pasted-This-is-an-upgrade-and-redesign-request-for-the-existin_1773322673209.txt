@@ -1,0 +1,359 @@
+This is an upgrade and redesign request for the existing GOJO Ethiopian e-commerce marketplace project.
+
+The platform is already partially implemented using:
+React + TailwindCSS + Supabase.
+
+Do NOT recreate the project. Improve the current implementation.
+
+Focus on improving:
+
+1. Admin dashboard
+2. Seller experience
+3. Product moderation
+4. Analytics and reports
+5. Real-time messaging and notifications
+6. Product detail and supplier transparency
+7. Better filters and data insights
+
+The design should remain modern using:
+Primary color: #22565f
+Secondary color: Gold
+
+------------------------------------------------
+
+ADMIN PANEL REDESIGN
+
+Create a powerful admin dashboard with clear analytics.
+
+Dashboard widgets must include:
+
+Market Activity
+- total products
+- total sellers
+- total buyers
+- active listings
+- pending approvals
+- rejected listings
+- orders today
+
+Top Categories
+- chart showing most active categories
+- sortable by sales, views, and listings
+
+Recent Products
+- newest listings
+- show status (pending, active, rejected)
+
+Recent Sellers
+- new seller registrations
+
+Recent Orders
+- latest transactions
+
+Use modern charts for visualization.
+
+Charts should include:
+- line charts
+- bar charts
+- donut charts
+- growth indicators
+
+------------------------------------------------
+
+ANALYTICS SECTION
+
+Create a dedicated analytics page.
+
+Include filters:
+
+Time Filters
+- today
+- yesterday
+- last 7 days
+- last 30 days
+- this month
+- this year
+- custom absolute date range
+
+Report Filters
+- by product
+- by category
+- by seller
+- by location
+- by status
+
+Metrics
+
+Sales analytics
+Product performance
+Seller performance
+Top viewed products
+Conversion rate
+Revenue trend
+
+------------------------------------------------
+
+REPORT GENERATION
+
+Allow admins to generate reports with advanced filters.
+
+Filters must support:
+
+Relative Date
+- today
+- yesterday
+- last week
+- last month
+- last year
+
+Absolute Date
+- custom start and end date
+
+Export formats:
+
+CSV
+PDF
+Excel
+
+Reports include:
+
+Sales reports
+Seller performance reports
+Product activity reports
+User growth reports
+
+------------------------------------------------
+
+PRODUCT MODERATION SYSTEM
+
+Improve the admin product moderation workflow.
+
+Product statuses:
+
+pending
+active
+rejected
+suspended
+
+Admin product table must support filters:
+
+Active
+Pending
+Rejected
+Suspended
+
+When admin clicks a status filter, the list must update immediately.
+
+If admin rejects a product:
+
+Admin must provide a correction message.
+
+Example message:
+
+"Please upload clearer product images and correct the description."
+
+This message must be sent to the seller as a notification.
+
+------------------------------------------------
+
+SELLER DASHBOARD IMPROVEMENTS
+
+Seller dashboard must show detailed performance metrics.
+
+Dashboard widgets:
+
+Total Products
+Active Products
+Pending Products
+Rejected Products
+Total Orders
+Revenue
+
+Each product must show:
+
+View count
+Wishlist count
+Orders
+Conversion rate
+
+------------------------------------------------
+
+BUYER AND SELLER CHAT SYSTEM
+
+Implement real-time messaging between buyer and seller.
+
+Features:
+
+Buyer can message seller from product page.
+Seller can respond through dashboard.
+
+Messages must support:
+
+text messages
+image attachments
+read status
+online status
+
+Use real-time updates using Supabase realtime.
+
+------------------------------------------------
+
+REAL-TIME NOTIFICATIONS
+
+Implement a notification system for:
+
+New messages
+Order updates
+Product approvals
+Product rejection messages
+New reviews
+
+Notifications must appear:
+
+in navbar bell icon
+in dashboard notification panel
+
+Unread notifications must be highlighted.
+
+------------------------------------------------
+
+SELLER AND BUYER ACCOUNT STRUCTURE
+
+Create detailed profiles.
+
+Buyer Profile
+
+name
+email
+phone
+saved addresses
+order history
+wishlist
+recent searches
+
+Seller Profile
+
+company name
+business license
+company address
+years in business
+verification status
+rating
+contact info
+
+------------------------------------------------
+
+PAYMENT FLOW IMPROVEMENT
+
+Improve checkout flow.
+
+Steps:
+
+Cart
+Shipping Address
+Delivery Method
+Payment Method
+Review Order
+Place Order
+
+Supported Ethiopian payments:
+
+Telebirr
+CBE Birr
+Amole
+Cash on Delivery
+
+------------------------------------------------
+
+PRODUCT DETAIL PAGE IMPROVEMENT
+
+Improve product detail page.
+
+Product page must include:
+
+Large image gallery with zoom
+Thumbnail navigation
+Price
+Rating
+Reviews
+Availability
+Shipping estimate
+
+Supplier Information Card
+
+company name
+company logo
+business address
+verification status
+certificates
+years on platform
+response rate
+contact supplier button
+
+Certificates section must show:
+
+certificate name
+issuing authority
+verification badge
+
+------------------------------------------------
+
+RECOMMENDED PRODUCTS
+
+Add recommendation sections under product detail.
+
+Auto sliding carousel.
+
+Sections:
+
+Recommended products
+Similar products
+Products from same seller
+
+------------------------------------------------
+
+SEARCH SYSTEM
+
+Improve search system.
+
+Search modal features:
+
+Autocomplete suggestions
+Recent searches
+Popular searches
+Category suggestions
+
+Search must include:
+
+products
+categories
+suppliers
+
+------------------------------------------------
+
+PERFORMANCE
+
+Optimize for Ethiopian network conditions.
+
+Requirements:
+
+lazy loading images
+fast page transitions
+PWA support
+low bandwidth optimization
+
+------------------------------------------------
+
+OUTPUT REQUIRED
+
+Generate:
+
+Improved admin dashboard UI
+Analytics system
+Report generation system
+Seller performance dashboard
+Real-time messaging system
+Notification system
+Improved product moderation workflow
+Enhanced product detail page
+Advanced filters and search

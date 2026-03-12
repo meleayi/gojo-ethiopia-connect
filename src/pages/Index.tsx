@@ -1,12 +1,211 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { motion } from "framer-motion";
+import { ArrowRight, Zap, TrendingUp, Truck, Shield, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import ProductCard from "@/components/ProductCard";
+import CategoryCard from "@/components/CategoryCard";
+import SellerCard from "@/components/SellerCard";
+import ReviewCard from "@/components/ReviewCard";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import heroBanner from "@/assets/hero-banner.jpg";
+import { categories, products, flashDeals, bestSellers, trendingProducts, sellers, reviews } from "@/data/mock-data";
+import { useState } from "react";
+
+const SectionHeader = ({ title, subtitle, link }: { title: string; subtitle?: string; link?: string }) => (
+  <div className="flex items-end justify-between mb-6">
+    <div>
+      <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">{title}</h2>
+      {subtitle && <p className="text-sm text-muted-foreground font-body mt-1">{subtitle}</p>}
+    </div>
+    {link && (
+      <Link to={link} className="text-sm font-body font-medium text-primary flex items-center gap-1 hover:text-teal-light transition-colors">
+        View All <ChevronRight className="w-4 h-4" />
+      </Link>
+    )}
+  </div>
+);
 
 const Index = () => {
+  const [email, setEmail] = useState("");
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={heroBanner} alt="Ethiopian marketplace" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/85 via-foreground/60 to-transparent" />
+        </div>
+        <div className="relative container py-16 md:py-28">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="max-w-xl"
+          >
+            <span className="inline-block px-3 py-1 rounded-full bg-secondary/20 text-secondary text-xs font-body font-semibold mb-4">
+              🇪🇹 Ethiopia's #1 Marketplace
+            </span>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground leading-tight mb-4">
+              Discover the Best of{" "}
+              <span className="text-gradient-gold">Ethiopia</span>
+            </h1>
+            <p className="text-primary-foreground/80 text-base md:text-lg font-body mb-8 leading-relaxed">
+              From handwoven textiles to premium coffee beans — shop authentic Ethiopian products from trusted local sellers.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/products">
+                <Button variant="gold" size="xl">
+                  Start Shopping <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/sellers">
+                <Button variant="hero-outline" size="xl">
+                  Become a Seller
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Stats */}
+      <section className="bg-card border-b border-border">
+        <div className="container py-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: Truck, label: "Nationwide Delivery", value: "100+ Cities" },
+              { icon: Shield, label: "Buyer Protection", value: "100% Secure" },
+              { icon: Zap, label: "Flash Deals", value: "Up to 70% Off" },
+              { icon: TrendingUp, label: "Active Sellers", value: "5,000+" },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-center gap-3 p-3"
+              >
+                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                  <stat.icon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-body font-semibold text-sm text-card-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground font-body">{stat.label}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section className="container py-12">
+        <SectionHeader title="Shop by Category" subtitle="Explore Ethiopia's finest collections" link="/products" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {categories.map((cat, i) => (
+            <CategoryCard key={cat.id} category={cat} index={i} />
+          ))}
+        </div>
+      </section>
+
+      {/* Flash Deals */}
+      <section className="bg-card py-12">
+        <div className="container">
+          <div className="flex items-center gap-3 mb-6">
+            <Zap className="w-6 h-6 text-secondary" />
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">Flash Deals</h2>
+            <div className="ml-auto flex items-center gap-2">
+              <div className="flex gap-1">
+                {["08", "42", "15"].map((t, i) => (
+                  <span key={i} className="bg-primary text-primary-foreground text-xs font-body font-bold px-2 py-1 rounded">
+                    {t}
+                  </span>
+                ))}
+              </div>
+              <Link to="/flash-deals" className="text-sm font-body font-medium text-primary flex items-center gap-1">
+                View All <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {flashDeals.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Best Sellers */}
+      <section className="container py-12">
+        <SectionHeader title="Best Sellers" subtitle="Most loved products by Ethiopian shoppers" link="/products" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {bestSellers.map((product, i) => (
+            <ProductCard key={product.id} product={product} index={i} />
+          ))}
+        </div>
+      </section>
+
+      {/* Trending */}
+      <section className="bg-card py-12">
+        <div className="container">
+          <SectionHeader title="Trending Now" subtitle="What's popular across Ethiopia" link="/products" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {trendingProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Sellers */}
+      <section className="container py-12">
+        <SectionHeader title="Featured Sellers" subtitle="Trusted Ethiopian businesses" link="/sellers" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {sellers.map((seller, i) => (
+            <SellerCard key={seller.id} seller={seller} index={i} />
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="bg-muted py-12 ethiopian-pattern">
+        <div className="container">
+          <SectionHeader title="What Our Customers Say" subtitle="Real stories from real shoppers" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {reviews.map((review, i) => (
+              <ReviewCard key={review.id} review={review} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="container py-12">
+        <div className="gradient-teal rounded-2xl p-8 md:p-12 text-center ethiopian-pattern">
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-foreground mb-2">
+            Stay Updated with <span className="text-gradient-gold">Gojo</span>
+          </h2>
+          <p className="text-primary-foreground/70 text-sm font-body mb-6 max-w-md mx-auto">
+            Get the latest deals, new arrivals, and exclusive offers delivered to your inbox.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 h-12 px-4 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 text-sm font-body focus:outline-none focus:ring-2 focus:ring-secondary"
+            />
+            <Button variant="gold" size="lg">Subscribe</Button>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };

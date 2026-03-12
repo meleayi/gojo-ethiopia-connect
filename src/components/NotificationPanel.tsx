@@ -1,25 +1,17 @@
-import { useState } from "react";
-import { Bell, Package, MessageCircle, CheckCircle, XCircle, Star, X, Check } from "lucide-react";
+import { Bell, Package, MessageCircle, CheckCircle, XCircle, Star, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  useDismissNotification,
+  useRealtimeNotifications,
+} from "@/hooks/useNotifications";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/lib/database.types";
 
-interface Notification {
-  id: string;
-  type: "message" | "order" | "approval" | "rejection" | "review";
-  title: string;
-  body: string;
-  time: string;
-  read: boolean;
-}
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: "1", type: "message", title: "New message from buyer", body: "Dawit M. asked about your Yirgacheffe Coffee listing.", time: "2 min ago", read: false },
-  { id: "2", type: "approval", title: "Product approved", body: "Your Samsung Galaxy A54 listing has been approved and is now live.", time: "15 min ago", read: false },
-  { id: "3", type: "order", title: "New order received", body: "Order #GJ-2026-045 — Habesha Kemis × 1 — 3,500 ETB", time: "32 min ago", read: false },
-  { id: "4", type: "rejection", title: "Product needs revision", body: "Please upload clearer product images and correct the description.", time: "1 hour ago", read: true },
-  { id: "5", type: "review", title: "New review on your product", body: "Hanna T. left a 5-star review on Wildflower Honey.", time: "3 hours ago", read: true },
-  { id: "6", type: "order", title: "Order delivered", body: "Order #GJ-2026-039 has been marked as delivered.", time: "Yesterday", read: true },
-];
+type Notification = Database["public"]["Tables"]["notifications"]["Row"];
 
 const typeIcon = (type: Notification["type"]) => {
   switch (type) {
@@ -28,6 +20,8 @@ const typeIcon = (type: Notification["type"]) => {
     case "approval": return <CheckCircle className="w-4 h-4 text-success" />;
     case "rejection": return <XCircle className="w-4 h-4 text-destructive" />;
     case "review": return <Star className="w-4 h-4 text-secondary" />;
+    case "seller_verification": return <CheckCircle className="w-4 h-4 text-info" />;
+    case "system": return <Bell className="w-4 h-4 text-muted-foreground" />;
   }
 };
 
@@ -38,7 +32,21 @@ const typeBg = (type: Notification["type"]) => {
     case "approval": return "bg-success/10";
     case "rejection": return "bg-destructive/10";
     case "review": return "bg-secondary/10";
+    case "seller_verification": return "bg-info/10";
+    case "system": return "bg-muted";
   }
+};
+
+const formatTime = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const days = Math.floor(hours / 24);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} min ago`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
 };
 
 interface NotificationPanelProps {
@@ -47,13 +55,18 @@ interface NotificationPanelProps {
 }
 
 const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const { user } = useAuth();
+  const { data: notifications = [] } = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+  const dismiss = useDismissNotification();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Subscribe to real-time notifications
+  useRealtimeNotifications();
 
-  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  const markRead = (id: string) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  const dismiss = (id: string) => setNotifications(prev => prev.filter(n => n.id !== id));
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  if (!user) return null;
 
   return (
     <AnimatePresence>
@@ -80,7 +93,10 @@ const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
               </div>
               <div className="flex items-center gap-1">
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} className="text-xs text-primary font-body hover:text-primary/80 transition-colors">
+                  <button
+                    onClick={() => markAllRead.mutate()}
+                    className="text-xs text-primary font-body hover:text-primary/80 transition-colors"
+                  >
                     Mark all read
                   </button>
                 )}
@@ -94,27 +110,30 @@ const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
                   <p className="text-sm text-muted-foreground font-body">No notifications</p>
                 </div>
               ) : (
-                notifications.map(notif => (
+                notifications.map((notif) => (
                   <div
                     key={notif.id}
-                    className={`flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors group ${!notif.read ? "bg-primary/3" : ""}`}
+                    className={`flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors group ${!notif.is_read ? "bg-primary/[0.03]" : ""}`}
                     data-testid={`notification-${notif.id}`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${typeBg(notif.type)}`}>
                       {typeIcon(notif.type)}
                     </div>
-                    <div className="flex-1 min-w-0" onClick={() => markRead(notif.id)}>
+                    <div
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => !notif.is_read && markRead.mutate(notif.id)}
+                    >
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-body font-medium text-foreground ${!notif.read ? "font-semibold" : ""}`}>
+                        <p className={`text-sm font-body text-foreground ${!notif.is_read ? "font-semibold" : "font-medium"}`}>
                           {notif.title}
                         </p>
-                        {!notif.read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />}
+                        {!notif.is_read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1.5" />}
                       </div>
                       <p className="text-xs text-muted-foreground font-body mt-0.5 line-clamp-2">{notif.body}</p>
-                      <p className="text-[10px] text-muted-foreground font-body mt-1">{notif.time}</p>
+                      <p className="text-[10px] text-muted-foreground font-body mt-1">{formatTime(notif.created_at)}</p>
                     </div>
                     <button
-                      onClick={() => dismiss(notif.id)}
+                      onClick={() => dismiss.mutate(notif.id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded"
                       data-testid={`dismiss-notif-${notif.id}`}
                     >
@@ -137,6 +156,6 @@ const NotificationPanel = ({ isOpen, onClose }: NotificationPanelProps) => {
   );
 };
 
-export { NotificationPanel, MOCK_NOTIFICATIONS };
+export { NotificationPanel };
 export type { Notification };
 export default NotificationPanel;

@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SlidersHorizontal, Grid3X3, List, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, List, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { products, categories, ethiopianCities } from "@/data/mock-data";
+import { useProductsFlat } from "@/hooks/useProducts";
+import { categories, ethiopianCities } from "@/data/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
 
 const ProductListing = () => {
@@ -13,27 +14,25 @@ const ProductListing = () => {
   const initialCategory = searchParams.get("category") || "";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCity, setSelectedCity] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 20000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
   const [minRating, setMinRating] = useState(0);
   const [sortBy, setSortBy] = useState("popular");
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  const filtered = useMemo(() => {
-    let result = [...products];
-    if (selectedCategory) result = result.filter(p => p.category === selectedCategory);
-    if (selectedCity) result = result.filter(p => p.location === selectedCity);
-    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
-    if (minRating) result = result.filter(p => p.rating >= minRating);
-    switch (sortBy) {
-      case "price-low": result.sort((a, b) => a.price - b.price); break;
-      case "price-high": result.sort((a, b) => b.price - a.price); break;
-      case "newest": result.reverse(); break;
-      case "rating": result.sort((a, b) => b.rating - a.rating); break;
-      default: result.sort((a, b) => b.reviews - a.reviews);
-    }
-    return result;
-  }, [selectedCategory, selectedCity, priceRange, minRating, sortBy]);
+  useEffect(() => {
+    const cat = searchParams.get("category") || "";
+    setSelectedCategory(cat);
+  }, [searchParams]);
+
+  const { data: products = [], isLoading } = useProducts({
+    category: selectedCategory || undefined,
+    city: selectedCity || undefined,
+    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+    maxPrice: priceRange[1] < 500000 ? priceRange[1] : undefined,
+    minRating: minRating > 0 ? minRating : undefined,
+    sortBy: sortBy as "popular" | "price-low" | "price-high" | "newest" | "rating",
+  });
 
   const FilterSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="mb-6">
@@ -59,116 +58,118 @@ const ProductListing = () => {
             <Button variant="outline" size="sm" className="md:hidden" onClick={() => setShowFilters(!showFilters)}>
               <SlidersHorizontal className="w-4 h-4 mr-1" /> Filters
             </Button>
-            <div className="hidden md:flex items-center gap-1">
-              <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="w-8 h-8" onClick={() => setViewMode("grid")}>
-                <Grid3X3 className="w-4 h-4" />
-              </Button>
-              <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="w-8 h-8" onClick={() => setViewMode("list")}>
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-9 px-3 rounded-lg border border-input bg-background text-xs font-body focus:outline-none focus:ring-2 focus:ring-ring"
+              className="text-sm font-body border border-input rounded-lg px-3 py-1.5 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="popular">Most Popular</option>
-              <option value="newest">Newest</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
+              <option value="newest">Newest First</option>
               <option value="rating">Highest Rated</option>
             </select>
+            <div className="hidden md:flex border border-input rounded-lg overflow-hidden">
+              <Button variant={viewMode === "grid" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => setViewMode("grid")}>
+                <Grid3X3 className="w-4 h-4" />
+              </Button>
+              <Button variant={viewMode === "list" ? "default" : "ghost"} size="sm" className="rounded-none" onClick={() => setViewMode("list")}>
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="flex gap-6">
-          {/* Sidebar Filters */}
-          <aside className={`${showFilters ? "block" : "hidden"} md:block w-full md:w-60 flex-shrink-0`}>
-            <div className="bg-card rounded-xl p-5 shadow-card sticky top-36">
-              <FilterSection title="Categories">
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setSelectedCategory("")}
-                    className={`block text-sm font-body transition-colors ${!selectedCategory ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    All Categories
-                  </button>
-                  {categories.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedCategory(c.name)}
-                      className={`block text-sm font-body transition-colors ${selectedCategory === c.name ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+          {/* Sidebar filters */}
+          <AnimatePresence>
+            {(showFilters || window.innerWidth >= 768) && (
+              <motion.aside
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 240, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                className="flex-shrink-0 hidden md:block"
+              >
+                <div className="bg-card border border-border rounded-xl p-4 sticky top-24">
+                  <FilterSection title="Category">
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => setSelectedCategory("")}
+                        className={`w-full text-left px-2 py-1.5 rounded text-sm font-body transition-colors ${!selectedCategory ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        All Categories
+                      </button>
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.name}
+                          onClick={() => setSelectedCategory(cat.name)}
+                          className={`w-full text-left px-2 py-1.5 rounded text-sm font-body transition-colors ${selectedCategory === cat.name ? "text-primary font-semibold" : "text-muted-foreground hover:text-foreground"}`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </FilterSection>
+
+                  <FilterSection title="City">
+                    <select
+                      value={selectedCity}
+                      onChange={(e) => setSelectedCity(e.target.value)}
+                      className="w-full text-sm font-body border border-input rounded-lg px-2 py-1.5 bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     >
-                      {c.name} ({c.productCount})
-                    </button>
-                  ))}
+                      <option value="">All Cities</option>
+                      {ethiopianCities.map((city) => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                  </FilterSection>
+
+                  <FilterSection title="Min Rating">
+                    <div className="flex gap-1">
+                      {[0, 3, 4, 4.5].map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setMinRating(r)}
+                          className={`flex-1 py-1 rounded text-xs font-body border transition-colors ${minRating === r ? "border-primary text-primary bg-primary/5" : "border-input text-muted-foreground hover:border-primary/50"}`}
+                        >
+                          {r === 0 ? "Any" : `${r}+`}
+                        </button>
+                      ))}
+                    </div>
+                  </FilterSection>
                 </div>
-              </FilterSection>
+              </motion.aside>
+            )}
+          </AnimatePresence>
 
-              <FilterSection title="Location">
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full h-9 px-3 rounded-lg border border-input bg-background text-xs font-body focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="">All Locations</option>
-                  {ethiopianCities.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
-              </FilterSection>
-
-              <FilterSection title="Price Range (ETB)">
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={priceRange[0] || ""}
-                    onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                    className="w-full h-9 px-2 rounded-lg border border-input bg-background text-xs font-body focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={priceRange[1] || ""}
-                    onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                    className="w-full h-9 px-2 rounded-lg border border-input bg-background text-xs font-body focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-              </FilterSection>
-
-              <FilterSection title="Rating">
-                <div className="space-y-2">
-                  {[4, 3, 2, 1].map(r => (
-                    <button
-                      key={r}
-                      onClick={() => setMinRating(r)}
-                      className={`block text-sm font-body ${minRating === r ? "text-primary font-semibold" : "text-muted-foreground"}`}
-                    >
-                      {"★".repeat(r)}{"☆".repeat(5 - r)} & up
-                    </button>
-                  ))}
-                </div>
-              </FilterSection>
-
-              <Button variant="outline" size="sm" className="w-full" onClick={() => { setSelectedCategory(""); setSelectedCity(""); setPriceRange([0, 20000]); setMinRating(0); }}>
-                Clear Filters
-              </Button>
-            </div>
-          </aside>
-
-          {/* Products Grid */}
+          {/* Product grid */}
           <div className="flex-1">
-            <p className="text-sm text-muted-foreground font-body mb-4">{filtered.length} products found</p>
-            <div className={`grid gap-4 ${viewMode === "grid" ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}>
-              {filtered.map((product, i) => (
-                <ProductCard key={product.id} product={product} index={i} />
-              ))}
-            </div>
-            {filtered.length === 0 && (
-              <div className="text-center py-20">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-24">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-24">
                 <p className="text-muted-foreground font-body">No products found. Try adjusting your filters.</p>
               </div>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground font-body mb-4">
+                  Showing {products.length} product{products.length !== 1 ? "s" : ""}
+                </p>
+                <div className={`grid gap-4 ${viewMode === "grid" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"}`}>
+                  {products.map((product, i) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>

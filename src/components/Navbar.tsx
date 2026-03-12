@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, Heart, User, Menu, X, MapPin, Globe, Sun, Moon, Bell } from "lucide-react";
+import { Search, ShoppingCart, Heart, User, Menu, X, MapPin, Globe, Sun, Moon, Bell, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 import { useTheme } from "./ThemeProvider";
 import NotificationPanel from "./NotificationPanel";
-import { MOCK_NOTIFICATIONS } from "./NotificationPanel";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCartCount } from "@/hooks/useCart";
+import { useWishlistCount } from "@/hooks/useWishlist";
+import { useUnreadNotificationCount } from "@/hooks/useNotifications";
 
 const CATEGORY_NAV = [
   { label: "Electronics", path: "/products?category=Electronics" },
@@ -25,8 +28,11 @@ const Navbar = () => {
   const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { user, profile, signOut } = useAuth();
 
-  const unreadCount = MOCK_NOTIFICATIONS.filter(n => !n.read).length;
+  const cartCount = useCartCount();
+  const wishlistCount = useWishlistCount();
+  const unreadCount = useUnreadNotificationCount();
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -50,6 +56,13 @@ const Navbar = () => {
     { path: "/flash-deals", label: "Flash Deals" },
     { path: "/sellers", label: "Sellers" },
   ];
+
+  const getDashboardPath = () => {
+    if (!profile) return "/login";
+    if (profile.role === "admin" || profile.role === "moderator") return "/admin";
+    if (profile.role === "seller") return "/seller-dashboard";
+    return "/dashboard";
+  };
 
   return (
     <>
@@ -105,45 +118,68 @@ const Navbar = () => {
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setSearchOpen(true)} data-testid="mobile-search-btn">
               <Search className="w-5 h-5" />
             </Button>
-            <Link to="/wishlist" data-testid="nav-wishlist">
-              <Button variant="ghost" size="icon" className="relative">
-                <Heart className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-secondary text-secondary-foreground text-[10px] font-bold flex items-center justify-center">3</span>
-              </Button>
-            </Link>
+
+            {user && (
+              <Link to="/wishlist" data-testid="nav-wishlist">
+                <Button variant="ghost" size="icon" className="relative">
+                  <Heart className="w-5 h-5" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-secondary text-secondary-foreground text-[10px] font-bold flex items-center justify-center">
+                      {wishlistCount > 9 ? "9+" : wishlistCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            )}
+
             <Link to="/cart" data-testid="nav-cart">
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-secondary text-secondary-foreground text-[10px] font-bold flex items-center justify-center">2</span>
-              </Button>
-            </Link>
-
-            {/* Notifications */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setNotifOpen(prev => !prev)}
-                data-testid="notification-bell"
-              >
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
-                    {unreadCount}
+                {cartCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-secondary text-secondary-foreground text-[10px] font-bold flex items-center justify-center">
+                    {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
               </Button>
-              <div className="absolute right-0 top-full">
-                <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
-              </div>
-            </div>
-
-            <Link to="/dashboard" data-testid="nav-account">
-              <Button variant="ghost" size="icon">
-                <User className="w-5 h-5" />
-              </Button>
             </Link>
+
+            {/* Notifications — only when logged in */}
+            {user && (
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  onClick={() => setNotifOpen((prev) => !prev)}
+                  data-testid="notification-bell"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </Button>
+                <div className="absolute right-0 top-full">
+                  <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
+                </div>
+              </div>
+            )}
+
+            {user ? (
+              <Link to={getDashboardPath()} data-testid="nav-account">
+                <Button variant="ghost" size="icon" className="relative">
+                  <User className="w-5 h-5" />
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/login" data-testid="nav-login">
+                <Button variant="default" size="sm" className="hidden md:flex text-xs">
+                  Sign In
+                </Button>
+              </Link>
+            )}
+
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsOpen(!isOpen)} data-testid="mobile-menu-btn">
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
@@ -177,9 +213,11 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="w-px h-5 bg-border mx-1 flex-shrink-0" />
-            <Link to="/admin" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors" data-testid="nav-admin">
-              Admin
-            </Link>
+            {profile?.role === "admin" || profile?.role === "moderator" ? (
+              <Link to="/admin" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-body text-muted-foreground hover:text-primary hover:bg-muted transition-colors" data-testid="nav-admin">
+                Admin
+              </Link>
+            ) : null}
           </div>
         </nav>
 
@@ -218,6 +256,16 @@ const Navbar = () => {
                     {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                   </Button>
                 </div>
+                {user && (
+                  <div className="border-t border-border pt-2 mt-2 px-3">
+                    <button
+                      onClick={signOut}
+                      className="flex items-center gap-2 text-sm font-body text-destructive hover:text-destructive/80"
+                    >
+                      <LogOut className="w-4 h-4" /> Sign Out
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

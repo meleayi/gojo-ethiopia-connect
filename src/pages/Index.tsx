@@ -12,8 +12,10 @@ import ReviewCard from "@/components/ReviewCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroBanner from "@/assets/hero-banner.jpg";
-import { categories, products, flashDeals, bestSellers, trendingProducts, sellers, reviews } from "@/data/mock-data";
+import { categories } from "@/data/mock-data";
 import { useState } from "react";
+import { useProductsFlat } from "@/hooks/useProducts";
+import { useSellers } from "@/hooks/useSellers";
 
 const SectionHeader = ({ title, subtitle, link }: { title: string; subtitle?: string; link?: string }) => (
   <div className="flex items-end justify-between mb-6">
@@ -42,6 +44,12 @@ const QUICK_CATS = [
 
 const Index = () => {
   const [email, setEmail] = useState("");
+
+  const { data: flashDeals = [] } = useProductsFlat({ isFlashDeal: true, limit: 4 });
+  const { data: electronics = [] } = useProductsFlat({ category: "Electronics", limit: 5 });
+  const { data: bestSellers = [] } = useProductsFlat({ sortBy: "popular", limit: 8 });
+  const { data: trendingProducts = [] } = useProductsFlat({ sortBy: "newest", limit: 4 });
+  const { data: featuredSellers = [] } = useSellers({ limit: 4, verified: true });
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,7 +181,7 @@ const Index = () => {
       <section className="container py-12">
         <SectionHeader title="Electronics & Tech" subtitle="Latest gadgets and devices" link="/products?category=Electronics" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {products.filter(p => p.category === "Electronics").slice(0, 5).map((product, i) => (
+          {electronics.map((product, i) => (
             <ProductCard key={product.id} product={product} index={i} />
           ))}
         </div>
@@ -241,7 +249,7 @@ const Index = () => {
       <section className="container py-12">
         <SectionHeader title="Gift Ideas" subtitle="Perfect for every occasion" link="/products?category=Gifts" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {products.filter(p => p.category === "Gifts").slice(0, 4).map((product, i) => (
+          {trendingProducts.slice(0, 4).map((product, i) => (
             <ProductCard key={product.id} product={product} index={i} />
           ))}
         </div>
@@ -252,7 +260,7 @@ const Index = () => {
         <div className="container">
           <SectionHeader title="Featured Sellers" subtitle="Trusted Ethiopian businesses" link="/sellers" />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {sellers.slice(0, 6).map((seller, i) => (
+            {featuredSellers.slice(0, 6).map((seller, i) => (
               <SellerCard key={seller.id} seller={seller} index={i} />
             ))}
           </div>

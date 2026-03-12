@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ProductListing from "./pages/ProductListing.tsx";
@@ -15,34 +16,42 @@ import SellerDashboard from "./pages/SellerDashboard.tsx";
 import AdminPanel from "./pages/AdminPanel.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <ThemeProvider>
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<ProductListing />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/seller-dashboard" element={<SellerDashboard />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/flash-deals" element={<ProductListing />} />
-            <Route path="/sellers" element={<ProductListing />} />
-            <Route path="/wishlist" element={<Dashboard />} />
-            <Route path="/login" element={<AuthPage />} />
-            <Route path="/signup" element={<AuthPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/products" element={<ProductListing />} />
+              <Route path="/product/:id" element={<ProductDetail />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/seller-dashboard" element={<SellerDashboard />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/flash-deals" element={<ProductListing />} />
+              <Route path="/sellers" element={<ProductListing />} />
+              <Route path="/wishlist" element={<Dashboard />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/signup" element={<AuthPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
 );

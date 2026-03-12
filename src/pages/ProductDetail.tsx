@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star, Heart, ShoppingCart, Truck, Shield, MapPin, Minus, Plus,
   ChevronRight, ChevronLeft, Share2, ZoomIn, Award, MessageCircle,
-  Eye, ChevronDown
+  Eye, ChevronDown, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,33 +12,55 @@ import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import ReviewCard from "@/components/ReviewCard";
 import ChatModal from "@/components/ChatModal";
-import { products, reviews } from "@/data/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProduct, useProductsFlat } from "@/hooks/useProducts";
+import { useAddToCart } from "@/hooks/useCart";
+import { useToggleWishlist, useWishlistIds } from "@/hooks/useWishlist";
+import { useReviews } from "@/hooks/useReviews";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const ProductDetail = () => {
-  const { id } = useParams();
-  const product = products.find(p => p.id === id) || products[0];
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const { data: product, isLoading, isError } = useProduct(id!);
+  const addToCart = useAddToCart();
+  const wishlistIds = useWishlistIds();
+  const toggleWishlist = useToggleWishlist();
+  const { data: productReviews = [] } = useReviews(id!);
+  const { data: relatedProducts = [] } = useProductsFlat({
+    category: product?.category ?? undefined,
+    limit: 8,
+  });
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
-  const [wishlisted, setWishlisted] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [activeTab, setActiveTab] = useState<"specs" | "reviews" | "shipping">("specs");
   const [chatOpen, setChatOpen] = useState(false);
   const recRef = useRef<HTMLDivElement>(null);
   const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 8);
+  const isWishlisted = wishlistIds.has(id ?? "");
 
-  const images = product.images || [product.image, product.image, product.image];
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const images: string[] = product?.product_images
+    ? [...product.product_images]
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((img) => img.url)
+    : ["https://images.unsplash.com/photo-1560472355-536de3962603?w=600&q=80"];
+
+  const originalPrice = product?.original_price;
+  const discount = originalPrice && originalPrice > (product?.price ?? 0)
+    ? Math.round(((originalPrice - product!.price) / originalPrice) * 100)
     : 0;
 
-  // Auto-scroll recommendations
+  const sellerProfile = product?.seller_profiles as any;
+  const sellerName = sellerProfile?.company_name ?? "Gojo Seller";
+
   useEffect(() => {
     const startAutoScroll = () => {
       autoScrollRef.current = setInterval(() => {
@@ -60,12 +82,9 @@ const ProductDetail = () => {
   const resumeAutoScroll = () => {
     if (autoScrollRef.current) clearInterval(autoScrollRef.current);
     autoScrollRef.current = setInterval(() => {
-      if (recRef.current) {
-        recRef.current.scrollBy({ left: 280, behavior: "smooth" });
-      }
+      if (recRef.current) recRef.current.scrollBy({ left: 280, behavior: "smooth" });
     }, 3500);
   };
-
   const scrollRec = (dir: "left" | "right") => {
     recRef.current?.scrollBy({ left: dir === "right" ? 280 : -280, behavior: "smooth" });
   };
@@ -73,13 +92,51 @@ const ProductDetail = () => {
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isZoomed) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setZoomPos({ x, y });
+    setZoomPos({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
   };
 
-  const description = product.description ||
-    `Experience the finest quality ${product.category.toLowerCase()} from Ethiopia. Carefully sourced from local artisans and producers, this product represents the best of Ethiopian craftsmanship and tradition. Every item is handpicked to ensure premium quality and authentic origin.`;
+  const handleAddToCart = () => {
+    if (!user) { toast.error("Please sign in to add to cart"); navigate("/login"); return; }
+    addToCart.mutate({ productId: id!, quantity }, {
+      onSuccess: () => toast.success("Added to cart"),
+    });
+  };
+
+  const handleWishlist = () => {
+    if (!user) { toast.error("Please sign in to save items"); navigate("/login"); return; }
+    toggleWishlist.mutate({ productId: id!, isWishlisted });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center py-32">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (isError || !product) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container py-20 text-center">
+          <h2 className="font-display text-2xl font-bold text-foreground mb-2">Product not found</h2>
+          <Link to="/products"><Button variant="gold" className="mt-4">Browse Products</Button></Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const description = product.description ?? `Experience this ${product.category ?? "product"} from Ethiopia.`;
+  const specAttributes = product.product_attributes as any[] | undefined;
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,8 +148,12 @@ const ProductDetail = () => {
           <ChevronRight className="w-3 h-3" />
           <Link to="/products" className="hover:text-primary transition-colors">Products</Link>
           <ChevronRight className="w-3 h-3" />
-          <Link to={`/products?category=${product.category}`} className="hover:text-primary transition-colors">{product.category}</Link>
-          <ChevronRight className="w-3 h-3" />
+          {product.category && (
+            <>
+              <Link to={`/products?category=${product.category}`} className="hover:text-primary transition-colors">{product.category}</Link>
+              <ChevronRight className="w-3 h-3" />
+            </>
+          )}
           <span className="text-foreground truncate max-w-xs">{product.name}</span>
         </nav>
 
@@ -100,7 +161,6 @@ const ProductDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 mb-12">
           {/* Left: Image Gallery */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-            {/* Main Image with Zoom */}
             <div
               className="relative bg-card rounded-2xl overflow-hidden shadow-card mb-3 cursor-zoom-in"
               style={{ aspectRatio: "1/1" }}
@@ -115,9 +175,9 @@ const ProductDetail = () => {
                 className={`w-full h-full object-cover transition-transform duration-300 ${isZoomed ? "scale-[2]" : "scale-100"}`}
                 style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
               />
-              {product.badge && (
+              {product.is_flash_deal && (
                 <Badge className="absolute top-4 left-4 bg-secondary text-secondary-foreground font-semibold">
-                  {product.badge}
+                  Flash Deal
                 </Badge>
               )}
               {discount > 0 && (
@@ -130,8 +190,6 @@ const ProductDetail = () => {
                 <span className="text-xs font-body text-foreground">Hover to zoom</span>
               </div>
             </div>
-
-            {/* Thumbnails */}
             <div className="flex gap-2 overflow-x-auto pb-1">
               {images.map((img, i) => (
                 <button
@@ -148,62 +206,61 @@ const ProductDetail = () => {
 
           {/* Right: Product Info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
-            {/* Category & Seller */}
             <div className="flex items-center gap-2 flex-wrap">
-              <Link to={`/products?category=${product.category}`}>
-                <Badge variant="outline" className="text-xs font-body hover:bg-muted transition-colors cursor-pointer">{product.category}</Badge>
-              </Link>
-              {product.listingType === "rent" && (
+              {product.category && (
+                <Link to={`/products?category=${product.category}`}>
+                  <Badge variant="outline" className="text-xs font-body hover:bg-muted transition-colors cursor-pointer">{product.category}</Badge>
+                </Link>
+              )}
+              {product.listing_type === "rent" && (
                 <Badge className="bg-info/10 text-info border-info/20 text-xs font-body" variant="outline">For Rent</Badge>
               )}
             </div>
 
-            {/* Title */}
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground leading-tight" data-testid="product-title">
               {product.name}
             </h1>
 
-            {/* Rating & Reviews */}
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-1">
                 {[1,2,3,4,5].map(s => (
-                  <Star key={s} className={`w-4 h-4 ${s <= Math.round(product.rating) ? "fill-secondary text-secondary" : "text-muted-foreground"}`} />
+                  <Star key={s} className={`w-4 h-4 ${s <= Math.round(product.rating ?? 0) ? "fill-secondary text-secondary" : "text-muted-foreground"}`} />
                 ))}
-                <span className="text-sm font-semibold font-body ml-1">{product.rating}</span>
+                <span className="text-sm font-semibold font-body ml-1">{(product.rating ?? 0).toFixed(1)}</span>
               </div>
               <span className="text-sm text-muted-foreground font-body cursor-pointer hover:text-primary transition-colors">
-                ({product.reviews.toLocaleString()} reviews)
+                ({(product.review_count ?? 0).toLocaleString()} reviews)
               </span>
               <span className="text-xs text-muted-foreground flex items-center gap-1 font-body">
-                <Eye className="w-3.5 h-3.5" /> 234 views today
+                <Eye className="w-3.5 h-3.5" /> {(product.view_count ?? 0).toLocaleString()} views
               </span>
-              <span className="flex items-center gap-1 text-xs font-body text-muted-foreground">
-                <MapPin className="w-3 h-3" /> {product.location}
-              </span>
+              {product.city && (
+                <span className="flex items-center gap-1 text-xs font-body text-muted-foreground">
+                  <MapPin className="w-3 h-3" /> {product.city}
+                </span>
+              )}
             </div>
 
-            {/* Price */}
             <div className="py-4 border-t border-b border-border">
               <div className="flex items-baseline gap-3 flex-wrap">
                 <span className="font-display text-3xl md:text-4xl font-bold text-primary" data-testid="product-price">
                   {product.price.toLocaleString()} ETB
-                  {product.rentPeriod && <span className="text-base font-body font-normal text-muted-foreground"> / {product.rentPeriod}</span>}
+                  {product.rent_period && <span className="text-base font-body font-normal text-muted-foreground"> / {product.rent_period}</span>}
                 </span>
-                {product.originalPrice && (
+                {originalPrice && originalPrice > product.price && (
                   <>
-                    <span className="text-lg text-muted-foreground line-through font-body">{product.originalPrice.toLocaleString()} ETB</span>
+                    <span className="text-lg text-muted-foreground line-through font-body">{originalPrice.toLocaleString()} ETB</span>
                     <Badge className="bg-destructive/10 text-destructive border-destructive/20 font-semibold" variant="outline">Save {discount}%</Badge>
                   </>
                 )}
               </div>
-              {product.originalPrice && (
+              {originalPrice && originalPrice > product.price && (
                 <p className="text-xs text-success font-body mt-1 font-medium">
-                  You save {(product.originalPrice - product.price).toLocaleString()} ETB
+                  You save {(originalPrice - product.price).toLocaleString()} ETB
                 </p>
               )}
             </div>
 
-            {/* Description */}
             <div>
               <p className={`text-sm text-muted-foreground font-body leading-relaxed ${!showFullDesc ? "line-clamp-3" : ""}`}>
                 {description}
@@ -215,11 +272,10 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* Delivery Info */}
             <div className="space-y-2.5 py-3 bg-muted/50 rounded-xl px-4">
               <div className="flex items-center gap-3 text-sm font-body">
                 <Truck className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-foreground">Free delivery to <strong>{product.location}</strong> • Est. 2-4 days</span>
+                <span className="text-foreground">Free delivery to <strong>{product.city ?? "your area"}</strong> • Est. 2-4 days</span>
               </div>
               <div className="flex items-center gap-3 text-sm font-body">
                 <Shield className="w-4 h-4 text-primary flex-shrink-0" />
@@ -231,8 +287,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Quantity (not for rent/real estate) */}
-            {product.listingType !== "rent" && !["Home Rent", "Home Sale", "Cars"].includes(product.category) && (
+            {product.listing_type !== "rent" && !["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") && (
               <div className="flex items-center gap-4">
                 <span className="text-sm font-body font-medium text-foreground">Quantity:</span>
                 <div className="flex items-center rounded-lg border border-input overflow-hidden">
@@ -240,47 +295,60 @@ const ProductDetail = () => {
                     <Minus className="w-4 h-4" />
                   </Button>
                   <span className="w-12 text-center text-sm font-body font-semibold border-x border-input py-2" data-testid="quantity-value">{quantity}</span>
-                  <Button variant="ghost" size="icon" className="w-9 h-9 rounded-none" onClick={() => setQuantity(quantity + 1)} data-testid="quantity-increase">
+                  <Button variant="ghost" size="icon" className="w-9 h-9 rounded-none" onClick={() => setQuantity(q => q + 1)} data-testid="quantity-increase">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-                <span className="text-xs text-muted-foreground font-body">{product.inStock ? "In stock" : "Out of stock"}</span>
+                <span className="text-xs text-muted-foreground font-body">
+                  {product.in_stock ? `${product.stock_quantity ?? "In"} stock` : "Out of stock"}
+                </span>
               </div>
             )}
 
-            {/* CTA Buttons */}
             <div className="flex gap-3 pt-1">
-              <Button variant="gold" size="xl" className="flex-1" data-testid="add-to-cart-btn">
+              <Button
+                variant="gold"
+                size="xl"
+                className="flex-1"
+                onClick={handleAddToCart}
+                disabled={addToCart.isPending || !product.in_stock}
+                data-testid="add-to-cart-btn"
+              >
                 <ShoppingCart className="w-5 h-5" />
-                {["Home Rent", "Home Sale", "Cars"].includes(product.category) ? "Schedule Viewing" : "Add to Cart"}
+                {["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") ? "Schedule Viewing" : "Add to Cart"}
               </Button>
               <Button variant="hero" size="xl" className="flex-1" data-testid="buy-now-btn">
-                {["Home Rent", "Home Sale", "Cars"].includes(product.category) ? "Contact Seller" : "Buy Now"}
+                {["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") ? "Contact Seller" : "Buy Now"}
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                className={`w-14 h-14 flex-shrink-0 ${wishlisted ? "border-destructive text-destructive" : ""}`}
-                onClick={() => setWishlisted(!wishlisted)}
+                className={`w-14 h-14 flex-shrink-0 ${isWishlisted ? "border-destructive text-destructive" : ""}`}
+                onClick={handleWishlist}
                 data-testid="wishlist-btn"
               >
-                <Heart className={`w-5 h-5 ${wishlisted ? "fill-destructive" : ""}`} />
+                <Heart className={`w-5 h-5 ${isWishlisted ? "fill-destructive" : ""}`} />
               </Button>
-              <Button variant="outline" size="icon" className="w-14 h-14 flex-shrink-0" data-testid="share-btn">
+              <Button variant="outline" size="icon" className="w-14 h-14 flex-shrink-0" data-testid="share-btn"
+                onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Link copied!"); }}>
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>
 
-            {/* Seller Info */}
             <div className="bg-card rounded-xl border border-border p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full gradient-teal flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold font-body">{product.seller.charAt(0)}</span>
+                <div className="w-11 h-11 rounded-full gradient-teal flex items-center justify-center overflow-hidden">
+                  {sellerProfile?.logo_url ? (
+                    <img src={sellerProfile.logo_url} alt={sellerName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-primary-foreground font-bold font-body">{sellerName.charAt(0)}</span>
+                  )}
                 </div>
                 <div>
-                  <p className="font-body font-semibold text-sm text-foreground">{product.seller}</p>
+                  <p className="font-body font-semibold text-sm text-foreground">{sellerName}</p>
                   <p className="text-xs text-muted-foreground font-body flex items-center gap-1">
-                    <Shield className="w-3 h-3 text-info" /> Verified Seller • {product.location}
+                    <Shield className="w-3 h-3 text-info" />
+                    {sellerProfile?.is_verified ? "Verified Seller" : "Seller"} • {product.city ?? "Ethiopia"}
                   </p>
                 </div>
               </div>
@@ -308,7 +376,7 @@ const ProductDetail = () => {
                 }`}
                 data-testid={`tab-${tab}`}
               >
-                {tab === "specs" ? "Specifications" : tab === "reviews" ? `Reviews (${product.reviews})` : "Shipping & Returns"}
+                {tab === "specs" ? "Specifications" : tab === "reviews" ? `Reviews (${product.review_count ?? 0})` : "Shipping & Returns"}
               </button>
             ))}
           </div>
@@ -316,12 +384,12 @@ const ProductDetail = () => {
           <AnimatePresence mode="wait">
             {activeTab === "specs" && (
               <motion.div key="specs" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                {product.specs ? (
+                {specAttributes && specAttributes.length > 0 ? (
                   <div className="bg-card rounded-xl shadow-card overflow-hidden max-w-2xl">
-                    {Object.entries(product.specs).map(([key, val], i) => (
-                      <div key={key} className={`flex items-center gap-4 px-5 py-3.5 ${i % 2 === 0 ? "bg-muted/30" : ""}`}>
-                        <span className="text-sm font-body font-semibold text-foreground w-40 flex-shrink-0">{key}</span>
-                        <span className="text-sm font-body text-muted-foreground">{val}</span>
+                    {specAttributes.map((attr: any, i: number) => (
+                      <div key={attr.id ?? i} className={`flex items-center gap-4 px-5 py-3.5 ${i % 2 === 0 ? "bg-muted/30" : ""}`}>
+                        <span className="text-sm font-body font-semibold text-foreground w-40 flex-shrink-0">{attr.attribute_name}</span>
+                        <span className="text-sm font-body text-muted-foreground">{attr.attribute_value}</span>
                       </div>
                     ))}
                   </div>
@@ -335,13 +403,13 @@ const ProductDetail = () => {
               <motion.div key="reviews" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <div className="flex items-center gap-6 mb-6 p-5 bg-card rounded-xl shadow-card">
                   <div className="text-center">
-                    <p className="font-display text-5xl font-bold text-foreground">{product.rating}</p>
+                    <p className="font-display text-5xl font-bold text-foreground">{(product.rating ?? 0).toFixed(1)}</p>
                     <div className="flex items-center gap-0.5 justify-center my-1">
                       {[1,2,3,4,5].map(s => (
-                        <Star key={s} className={`w-4 h-4 ${s <= Math.round(product.rating) ? "fill-secondary text-secondary" : "text-muted-foreground"}`} />
+                        <Star key={s} className={`w-4 h-4 ${s <= Math.round(product.rating ?? 0) ? "fill-secondary text-secondary" : "text-muted-foreground"}`} />
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground font-body">{product.reviews} reviews</p>
+                    <p className="text-xs text-muted-foreground font-body">{product.review_count ?? 0} reviews</p>
                   </div>
                   <div className="flex-1 space-y-1.5">
                     {[5,4,3,2,1].map(star => (
@@ -356,11 +424,15 @@ const ProductDetail = () => {
                     ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {reviews.map((review, i) => (
-                    <ReviewCard key={review.id} review={review} index={i} />
-                  ))}
-                </div>
+                {productReviews.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {productReviews.map((review: any, i: number) => (
+                      <ReviewCard key={review.id} review={review} index={i} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground font-body text-sm">No reviews yet. Be the first to review!</p>
+                )}
               </motion.div>
             )}
 
@@ -389,8 +461,8 @@ const ProductDetail = () => {
           </AnimatePresence>
         </div>
 
-        {/* Auto-scrolling Recommendations */}
-        {relatedProducts.length > 0 && (
+        {/* Recommendations */}
+        {relatedProducts.filter(p => p.id !== id).length > 0 && (
           <section className="mb-12">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -417,35 +489,23 @@ const ProductDetail = () => {
               onMouseLeave={resumeAutoScroll}
               data-testid="recommendations-scroll"
             >
-              {[...relatedProducts, ...relatedProducts].map((p, i) => (
-                <div key={`${p.id}-${i}`} className="flex-shrink-0 w-52">
+              {relatedProducts.filter(p => p.id !== id).map((p, i) => (
+                <div key={p.id} className="flex-shrink-0 w-52">
                   <ProductCard product={p} index={i} />
                 </div>
               ))}
             </div>
           </section>
         )}
-
-        {/* Recently Viewed */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl font-bold text-foreground">Recently Viewed</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {products.slice(0, 6).map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
-        </section>
       </div>
       <Footer />
 
       <ChatModal
         isOpen={chatOpen}
         onClose={() => setChatOpen(false)}
-        sellerName={product.seller}
+        sellerName={sellerName}
         productName={product.name}
-        sellerInitial={product.seller.charAt(0).toUpperCase() + (product.seller.split(" ")[1]?.charAt(0).toUpperCase() || "")}
+        sellerInitial={sellerName.charAt(0).toUpperCase() + (sellerName.split(" ")[1]?.charAt(0).toUpperCase() ?? "")}
       />
     </div>
   );

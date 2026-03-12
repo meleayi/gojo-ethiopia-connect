@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import {
   Eye, EyeOff, Mail, Lock, User, Phone, Building2, MapPin,
   Briefcase, FileText, ShieldCheck, ArrowRight, Check, ChevronLeft,
@@ -140,10 +142,12 @@ const PasswordField = ({
 const AuthPage = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { signIn, signUp } = useAuth();
 
   const [mode, setMode] = useState<Mode>("login");
   const [userType, setUserType] = useState<UserType>("buyer");
   const [step, setStep] = useState(1); // for seller multi-step signup
+  const [isLoading, setIsLoading] = useState(false);
 
   // shared fields
   const [email, setEmail] = useState("");
@@ -174,12 +178,53 @@ const AuthPage = () => {
     setStep(1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate auth — redirect based on user type
-    if (userType === "admin") navigate("/admin");
-    else if (userType === "seller") navigate("/seller-dashboard");
-    else navigate("/dashboard");
+    setIsLoading(true);
+
+    try {
+      if (mode === "login") {
+        const { error } = await signIn(email, password);
+        if (error) { toast.error(error.message); return; }
+        toast.success("Welcome back!");
+        if (userType === "admin") navigate("/admin");
+        else if (userType === "seller") navigate("/seller-dashboard");
+        else navigate("/dashboard");
+      } else {
+        if (password !== confirmPassword) { toast.error("Passwords do not match"); return; }
+        if (!agreedToTerms) { toast.error("Please accept the terms and conditions"); return; }
+
+        const { error } = await signUp({
+          email,
+          password,
+          fullName: userType === "seller" ? contactPerson : fullName,
+          phone: phone || undefined,
+          role: userType === "admin" ? "buyer" : userType,
+          sellerData: userType === "seller" ? {
+            companyName,
+            contactPerson,
+            phone,
+            businessEmail: email,
+            businessLicense: businessLicense || undefined,
+            companyAddress,
+            city: companyAddress.split(",").pop()?.trim() ?? "Addis Ababa",
+            yearsInBusiness: yearsInBusiness ? parseInt(yearsInBusiness) : undefined,
+          } : undefined,
+        });
+
+        if (error) { toast.error(error.message); return; }
+
+        toast.success(
+          userType === "seller"
+            ? "Account created! Your seller application is under review."
+            : "Account created! Please check your email to verify."
+        );
+        if (userType === "seller") navigate("/seller-dashboard");
+        else navigate("/dashboard");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const sellerStep1Complete = companyName && email && contactPerson && phone;
@@ -521,7 +566,7 @@ const AuthPage = () => {
                       <Button type="button" variant="outline" className="flex-shrink-0 gap-1" onClick={() => setStep(1)} data-testid="back-step-btn">
                         <ChevronLeft className="w-4 h-4" /> Back
                       </Button>
-                      <Button type="submit" variant="gold" size="lg" className="flex-1 gap-2" disabled={!agreedToTerms} data-testid="submit-btn">
+                      <Button type="submit" variant="gold" size="lg" className="flex-1 gap-2" disabled={!agreedToTerms || isLoading} data-testid="submit-btn">
                         Create Seller Account <ArrowRight className="w-4 h-4" />
                       </Button>
                     </div>

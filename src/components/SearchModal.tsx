@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, X, Clock, TrendingUp, ChevronRight, Mic, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { products, categories, popularSearches } from "@/data/mock-data";
+import { categories, popularSearches } from "@/data/mock-data";
+import { useProductsFlat } from "@/hooks/useProducts";
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -22,11 +23,11 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
   const debouncedQuery = useDebounce(query, 150);
 
-  const suggestions = debouncedQuery.length >= 2
-    ? products
-        .filter(p => p.name.toLowerCase().includes(debouncedQuery.toLowerCase()) || p.category.toLowerCase().includes(debouncedQuery.toLowerCase()))
-        .slice(0, 6)
-    : [];
+  const { data: supabaseProducts = [] } = useProductsFlat(
+    debouncedQuery.length >= 2 ? { search: debouncedQuery, limit: 6 } : {}
+  );
+
+  const suggestions = debouncedQuery.length >= 2 ? supabaseProducts : [];
 
   const categoryMatches = debouncedQuery.length >= 2
     ? categories.filter(c => c.name.toLowerCase().includes(debouncedQuery.toLowerCase())).slice(0, 3)
@@ -53,7 +54,14 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
   }, [isOpen, onClose]);
 
   const allItems = [
-    ...suggestions.map(p => ({ type: "product" as const, id: p.id, label: p.name, sub: p.category, image: p.image, price: p.price })),
+    ...suggestions.map(p => ({
+      type: "product" as const,
+      id: p.id,
+      label: p.name,
+      sub: p.category ?? "",
+      image: (p.product_images as any)?.[0]?.url ?? (p as any).image ?? "",
+      price: p.price,
+    })),
     ...categoryMatches.map(c => ({ type: "category" as const, id: c.id, label: c.name, sub: `${c.productCount} products`, image: c.image, price: null })),
   ];
 

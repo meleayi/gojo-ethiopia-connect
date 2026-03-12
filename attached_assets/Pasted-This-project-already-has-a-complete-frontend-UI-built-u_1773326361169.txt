@@ -1,0 +1,332 @@
+This project already has a complete frontend UI built using:
+
+React
+TailwindCSS
+
+The UI includes:
+
+authentication pages
+product listing
+product detail pages
+seller dashboard
+admin dashboard
+cart
+checkout
+chat
+notifications
+analytics
+reports
+
+Your task is NOT to redesign the UI.
+
+Instead, analyze the existing codebase and automatically infer the required backend architecture.
+
+------------------------------------------------
+
+STEP 1 — ANALYZE THE FRONTEND
+
+Scan the entire project and identify:
+
+forms
+inputs
+data fields
+filters
+tables
+dashboard widgets
+checkout flow
+chat system
+notification system
+
+From these components automatically extract:
+
+data models
+attributes
+relationships
+required database tables
+
+Do not rely on a predefined schema.
+
+The database structure must be inferred from the UI and component logic.
+
+------------------------------------------------
+
+STEP 2 — BUILD SUPABASE BACKEND
+
+Connect the system to Supabase.
+
+Use Supabase for:
+
+Authentication
+Database
+Storage
+Realtime
+Row Level Security
+
+The backend must support large-scale marketplace usage similar to Amazon and Alibaba.
+
+Design the architecture to support:
+
+millions of users
+millions of products
+high traffic
+high concurrent transactions
+
+Ensure the schema is scalable and normalized.
+
+------------------------------------------------
+
+STEP 3 — AUTHENTICATION
+
+Implement authentication using Supabase Auth.
+
+Supported login methods:
+
+email + password
+phone OTP
+OAuth providers (Google optional)
+
+After signup automatically create a profile record.
+
+User roles must include:
+
+buyer
+seller
+admin
+moderator
+
+The system must support role-based access control.
+
+------------------------------------------------
+
+STEP 4 — SELLER ONBOARDING
+
+Detect seller registration fields from the UI.
+
+Create a seller onboarding workflow.
+
+Seller accounts must include verification and approval by admin.
+
+Sellers cannot publish products until approved.
+
+------------------------------------------------
+
+STEP 5 — PRODUCT MANAGEMENT
+
+From the product creation UI extract:
+
+product fields
+variant fields
+attribute fields
+image uploads
+inventory fields
+
+Automatically build a product system supporting:
+
+variants
+attributes
+multiple images
+stock tracking
+pricing tiers
+bulk pricing
+
+Products must require admin approval before becoming public.
+
+------------------------------------------------
+
+STEP 6 — PRODUCT DISCOVERY
+
+Connect product listing pages to Supabase queries.
+
+Filters must work dynamically based on the UI fields.
+
+Track:
+
+product views
+wishlist counts
+search queries
+
+------------------------------------------------
+
+STEP 7 — PRODUCT DETAIL PAGE
+
+Fetch complete product information including:
+
+images
+variants
+attributes
+reviews
+seller company information
+
+Seller information must display:
+
+company profile
+business address
+certifications
+verification status
+ratings
+
+------------------------------------------------
+
+STEP 8 — CART SYSTEM
+
+Connect the cart UI to Supabase.
+
+Cart must persist in the database.
+
+Users must be able to:
+
+add to cart
+remove items
+update quantity
+save for later
+
+------------------------------------------------
+
+STEP 9 — CHECKOUT FLOW
+
+Connect the checkout process to Supabase.
+
+Steps must follow the UI flow:
+
+cart
+shipping address
+delivery method
+payment method
+order confirmation
+
+The system must create an order and order items.
+
+Orders must support lifecycle states:
+
+pending
+paid
+processing
+shipped
+delivered
+cancelled
+
+------------------------------------------------
+
+STEP 10 — PAYMENTS
+
+Implement payment workflow.
+
+The architecture must support multiple payment providers.
+
+Examples include:
+
+Telebirr
+CBE Birr
+Amole
+Cash on Delivery
+
+Design the system so additional providers can be added in the future.
+
+------------------------------------------------
+
+STEP 11 — REAL-TIME CHAT
+
+Implement buyer-seller messaging using Supabase Realtime.
+
+Messages must support:
+
+text
+images
+attachments
+read receipts
+typing indicators
+
+------------------------------------------------
+
+STEP 12 — NOTIFICATION SYSTEM
+
+Implement a real-time notification system.
+
+Notifications must trigger when:
+
+new message
+order updates
+product approval
+product rejection
+reviews submitted
+seller verification
+
+Notifications must appear in:
+
+navbar notification icon
+dashboard notification panel
+
+------------------------------------------------
+
+STEP 13 — ADMIN CONTROL
+
+Connect the admin dashboard to Supabase.
+
+Admins must be able to:
+
+approve or reject sellers
+approve or reject products
+write correction messages to sellers
+suspend accounts
+monitor marketplace activity
+
+------------------------------------------------
+
+STEP 14 — ANALYTICS & REPORTS
+
+Connect analytics dashboards to Supabase queries.
+
+Reports must support filters including:
+
+today
+yesterday
+last 7 days
+last 30 days
+this month
+this year
+custom date range
+
+Analytics must include:
+
+sales
+product views
+category performance
+seller performance
+revenue trends
+
+------------------------------------------------
+
+STEP 15 — SECURITY
+
+Implement strict row level security.
+
+Users must only access their own data.
+
+Sellers must only manage their products.
+
+Admins must have full access.
+
+------------------------------------------------
+
+STEP 16 — PERFORMANCE
+
+Optimize the backend for large-scale marketplace usage.
+
+Use indexing and efficient queries.
+
+Ensure the architecture can scale to millions of users.
+
+------------------------------------------------
+
+OUTPUT REQUIRED
+
+Generate all Supabase integration code including:
+
+authentication integration
+database schema inferred from the UI
+row level security policies
+file storage configuration
+react hooks for queries
+real-time messaging
+notification system
+order processing logic

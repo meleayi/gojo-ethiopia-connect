@@ -1,96 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Playfair+Display:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 180 5% 97%;
+    --foreground: 192 43% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 192 43% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 192 43% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 186 47% 25%;
+    --primary-foreground: 45 60% 97%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 43 56% 52%;
+    --secondary-foreground: 192 43% 10%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 180 8% 92%;
+    --muted-foreground: 192 15% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 43 56% 52%;
+    --accent-foreground: 192 43% 10%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 180 10% 90%;
+    --input: 180 10% 88%;
+    --ring: 186 47% 25%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    --gold: 43 56% 52%;
+    --gold-light: 43 60% 70%;
+    --gold-dark: 43 56% 40%;
+    --teal: 186 47% 25%;
+    --teal-light: 186 40% 40%;
+    --teal-dark: 186 50% 18%;
+    --success: 152 60% 42%;
+    --warning: 38 92% 50%;
+    --info: 205 87% 50%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 186 50% 18%;
+    --sidebar-foreground: 180 10% 90%;
+    --sidebar-primary: 43 56% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 186 40% 25%;
+    --sidebar-accent-foreground: 180 10% 90%;
+    --sidebar-border: 186 40% 22%;
+    --sidebar-ring: 43 56% 52%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --shadow-card: 0 1px 3px 0 hsl(186 47% 25% / 0.06), 0 1px 2px -1px hsl(186 47% 25% / 0.06);
+    --shadow-card-hover: 0 10px 25px -5px hsl(186 47% 25% / 0.1), 0 8px 10px -6px hsl(186 47% 25% / 0.06);
+    --shadow-gold: 0 4px 20px -4px hsl(43 56% 52% / 0.35);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 192 43% 8%;
+    --foreground: 180 10% 92%;
+    --card: 192 40% 12%;
+    --card-foreground: 180 10% 92%;
+    --popover: 192 40% 12%;
+    --popover-foreground: 180 10% 92%;
+    --primary: 43 56% 52%;
+    --primary-foreground: 192 43% 10%;
+    --secondary: 186 47% 25%;
+    --secondary-foreground: 180 10% 92%;
+    --muted: 192 30% 16%;
+    --muted-foreground: 180 10% 60%;
+    --accent: 43 56% 52%;
+    --accent-foreground: 192 43% 10%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 192 30% 18%;
+    --input: 192 30% 18%;
+    --ring: 43 56% 52%;
   }
 }
 
@@ -98,8 +90,48 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer components {
+  .ethiopian-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L60 30L30 60L0 30Z' fill='none' stroke='%23D4AF37' stroke-width='0.5' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 60px 60px;
+  }
+  .gradient-teal {
+    background: linear-gradient(135deg, hsl(var(--teal-dark)), hsl(var(--teal)), hsl(var(--teal-light)));
+  }
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--gold-dark)), hsl(var(--gold)), hsl(var(--gold-light)));
+  }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(var(--gold)), hsl(var(--gold-light)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
+  }
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+}
+
+@layer utilities {
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-card-hover);
   }
 }

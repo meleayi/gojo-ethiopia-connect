@@ -13,6 +13,7 @@ import Checkout from "./pages/Checkout.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import SellerDashboard from "./pages/SellerDashboard.tsx";
 import AdminPanel from "./pages/AdminPanel.tsx";
+import AuthPage from "./pages/AuthPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,8 @@ const App = () => (
             <Route path="/flash-deals" element={<ProductListing />} />
             <Route path="/sellers" element={<ProductListing />} />
             <Route path="/wishlist" element={<Dashboard />} />
+            <Route path="/login" element={<AuthPage />} />
+            <Route path="/signup" element={<AuthPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

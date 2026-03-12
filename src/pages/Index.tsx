@@ -1,5 +1,8 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Zap, TrendingUp, Truck, Shield, ChevronRight } from "lucide-react";
+import {
+  ArrowRight, Zap, TrendingUp, Truck, Shield, ChevronRight,
+  Laptop, Car, Home, Gift, Smartphone, ShoppingBag, Footprints, Gem
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
@@ -25,6 +28,17 @@ const SectionHeader = ({ title, subtitle, link }: { title: string; subtitle?: st
     )}
   </div>
 );
+
+const QUICK_CATS = [
+  { name: "Electronics", icon: Laptop, path: "/products?category=Electronics", color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  { name: "Cars", icon: Car, path: "/products?category=Cars", color: "bg-red-500/10 text-red-600 dark:text-red-400" },
+  { name: "Home Rent", icon: Home, path: "/products?category=Home Rent", color: "bg-green-500/10 text-green-600 dark:text-green-400" },
+  { name: "Gifts", icon: Gift, path: "/products?category=Gifts", color: "bg-pink-500/10 text-pink-600 dark:text-pink-400" },
+  { name: "Phones", icon: Smartphone, path: "/products?category=Electronics", color: "bg-purple-500/10 text-purple-600 dark:text-purple-400" },
+  { name: "Bags", icon: ShoppingBag, path: "/products?category=Bags", color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  { name: "Shoes", icon: Footprints, path: "/products?category=Shoes", color: "bg-teal-500/10 text-teal-600 dark:text-teal-400" },
+  { name: "Jewelry", icon: Gem, path: "/products?category=Jewelry", color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" },
+];
 
 const Index = () => {
   const [email, setEmail] = useState("");
@@ -54,16 +68,16 @@ const Index = () => {
               <span className="text-gradient-gold">Ethiopia</span>
             </h1>
             <p className="text-primary-foreground/80 text-base md:text-lg font-body mb-8 leading-relaxed">
-              From handwoven textiles to premium coffee beans — shop authentic Ethiopian products from trusted local sellers.
+              From handwoven textiles to premium coffee beans, electronics to real estate — shop and list anything from trusted local sellers.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link to="/products">
-                <Button variant="gold" size="xl">
+                <Button variant="gold" size="xl" data-testid="hero-shop-btn">
                   Start Shopping <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/sellers">
-                <Button variant="hero-outline" size="xl">
+              <Link to="/seller-dashboard">
+                <Button variant="hero-outline" size="xl" data-testid="hero-sell-btn">
                   Become a Seller
                 </Button>
               </Link>
@@ -102,11 +116,27 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="container py-12">
-        <SectionHeader title="Shop by Category" subtitle="Explore Ethiopia's finest collections" link="/products" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((cat, i) => (
+      {/* Quick Category Icons */}
+      <section className="container py-8">
+        <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
+          {QUICK_CATS.map((cat, i) => (
+            <motion.div key={cat.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <Link to={cat.path} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-muted transition-colors group" data-testid={`quick-cat-${cat.name.toLowerCase()}`}>
+                <div className={`w-12 h-12 rounded-xl ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <cat.icon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-body font-medium text-foreground text-center">{cat.name}</span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* All Categories */}
+      <section className="container py-8">
+        <SectionHeader title="Shop by Category" subtitle="Explore Ethiopia's finest collections across 14 categories" link="/products" />
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {categories.slice(0, 14).map((cat, i) => (
             <CategoryCard key={cat.id} category={cat} index={i} />
           ))}
         </div>
@@ -139,13 +169,59 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Best Sellers */}
+      {/* Electronics Feature */}
       <section className="container py-12">
-        <SectionHeader title="Best Sellers" subtitle="Most loved products by Ethiopian shoppers" link="/products" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {bestSellers.map((product, i) => (
+        <SectionHeader title="Electronics & Tech" subtitle="Latest gadgets and devices" link="/products?category=Electronics" />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {products.filter(p => p.category === "Electronics").slice(0, 5).map((product, i) => (
             <ProductCard key={product.id} product={product} index={i} />
           ))}
+        </div>
+      </section>
+
+      {/* Best Sellers */}
+      <section className="bg-card py-12">
+        <div className="container">
+          <SectionHeader title="Best Sellers" subtitle="Most loved products by Ethiopian shoppers" link="/products" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {bestSellers.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Real Estate Banner */}
+      <section className="container py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Link to="/products?category=Home Rent">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="relative rounded-2xl overflow-hidden h-48 cursor-pointer"
+            >
+              <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80" alt="Home Rent" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-6">
+                <p className="text-primary-foreground/80 text-xs font-body mb-1">Rent a Home</p>
+                <p className="font-display text-2xl font-bold text-primary-foreground">Find Your Perfect Rental</p>
+                <p className="text-primary-foreground/70 text-sm font-body mt-1">Apartments, Villas & More</p>
+              </div>
+            </motion.div>
+          </Link>
+          <Link to="/products?category=Cars">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="relative rounded-2xl overflow-hidden h-48 cursor-pointer"
+            >
+              <img src="https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&q=80" alt="Cars" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-foreground/70 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-6">
+                <p className="text-primary-foreground/80 text-xs font-body mb-1">Buy a Car</p>
+                <p className="font-display text-2xl font-bold text-primary-foreground">New & Used Vehicles</p>
+                <p className="text-primary-foreground/70 text-sm font-body mt-1">Luxury, SUVs & Economy</p>
+              </div>
+            </motion.div>
+          </Link>
         </div>
       </section>
 
@@ -161,13 +237,25 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Sellers */}
+      {/* Gifts Section */}
       <section className="container py-12">
-        <SectionHeader title="Featured Sellers" subtitle="Trusted Ethiopian businesses" link="/sellers" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {sellers.map((seller, i) => (
-            <SellerCard key={seller.id} seller={seller} index={i} />
+        <SectionHeader title="Gift Ideas" subtitle="Perfect for every occasion" link="/products?category=Gifts" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {products.filter(p => p.category === "Gifts").slice(0, 4).map((product, i) => (
+            <ProductCard key={product.id} product={product} index={i} />
           ))}
+        </div>
+      </section>
+
+      {/* Featured Sellers */}
+      <section className="bg-card py-12">
+        <div className="container">
+          <SectionHeader title="Featured Sellers" subtitle="Trusted Ethiopian businesses" link="/sellers" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {sellers.slice(0, 6).map((seller, i) => (
+              <SellerCard key={seller.id} seller={seller} index={i} />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -199,8 +287,9 @@ const Index = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="flex-1 h-12 px-4 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/50 text-sm font-body focus:outline-none focus:ring-2 focus:ring-secondary"
+              data-testid="newsletter-email-input"
             />
-            <Button variant="gold" size="lg">Subscribe</Button>
+            <Button variant="gold" size="lg" data-testid="newsletter-subscribe-btn">Subscribe</Button>
           </div>
         </div>
       </section>

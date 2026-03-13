@@ -477,7 +477,7 @@ const ProductDetail = () => {
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => scrollRec("right")} data-testid="rec-scroll-right">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Link to={`/products?category=${product.category}`}>
+                <Link to={`/products?category=${categoryName}`}>
                   <Button variant="outline" size="sm" className="text-xs">View all</Button>
                 </Link>
               </div>

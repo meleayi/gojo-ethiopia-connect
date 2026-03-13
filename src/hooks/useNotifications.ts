@@ -128,7 +128,7 @@ export const useSendNotification = () => {
         type: notification.type,
         title: notification.title,
         body: notification.body,
-        data: notification.data ?? {},
+        data: (notification.data ?? {}) as any,
         action_url: notification.actionUrl ?? null,
       }]);
       if (error) throw error;

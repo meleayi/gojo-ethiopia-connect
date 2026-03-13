@@ -317,7 +317,7 @@ export const useAdminProducts = (filters: { status?: string; search?: string } =
         .select(`*, seller_profiles(company_name), categories(name)`)
         .order("created_at", { ascending: false });
 
-      if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
+      if (filters.status && filters.status !== "all") query = query.eq("status", filters.status as any);
       if (filters.search) {
         query = query.or(`name.ilike.%${filters.search}%,categories.name.ilike.%${filters.search}%`);
       }

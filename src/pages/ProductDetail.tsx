@@ -30,8 +30,9 @@ const ProductDetail = () => {
   const wishlistIds = useWishlistIds();
   const toggleWishlist = useToggleWishlist();
   const { data: productReviews = [] } = useReviews(id!);
+  const categoryName = (product as any)?.categories?.name ?? undefined;
   const { data: relatedProducts = [] } = useProductsFlat({
-    category: product?.category ?? undefined,
+    category: categoryName,
     limit: 8,
   });
 

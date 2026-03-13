@@ -13,7 +13,6 @@ export interface ReviewCardData {
   city?: string | null;
   created_at?: string;
   profiles?: { full_name?: string | null; avatar_url?: string | null; city?: string | null } | null;
-  [key: string]: unknown;
 }
 
 interface ReviewCardProps {

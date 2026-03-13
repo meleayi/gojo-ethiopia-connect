@@ -39,8 +39,8 @@ export const useProducts = (filters: ProductFilters = {}) => {
         `)
         .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
 
-      if (filters.status) query = query.eq("status", filters.status);
-      else query = query.eq("status", "approved");
+      if (filters.status) query = query.eq("status", filters.status as any);
+      else query = query.eq("status", "approved" as any);
 
       if (filters.category) query = query.eq("category_id", filters.category);
       if (filters.city) query = query.eq("city", filters.city);
@@ -99,7 +99,7 @@ export const useProductsFlat = (filters: {
         `);
 
       const status = filters.status ?? "approved";
-      query = query.eq("status", status);
+      query = query.eq("status", status as any);
 
       if (filters.category) query = query.ilike("category", `%${filters.category}%`);
       if (filters.city) query = query.eq("city", filters.city);
@@ -317,7 +317,7 @@ export const useAdminProducts = (filters: { status?: string; search?: string } =
         .select(`*, seller_profiles(company_name), categories(name)`)
         .order("created_at", { ascending: false });
 
-      if (filters.status && filters.status !== "all") query = query.eq("status", filters.status);
+      if (filters.status && filters.status !== "all") query = query.eq("status", filters.status as any);
       if (filters.search) {
         query = query.or(`name.ilike.%${filters.search}%,categories.name.ilike.%${filters.search}%`);
       }

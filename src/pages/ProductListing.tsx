@@ -25,7 +25,7 @@ const ProductListing = () => {
     setSelectedCategory(cat);
   }, [searchParams]);
 
-  const { data: products = [], isLoading } = useProducts({
+  const { data: products = [], isLoading } = useProductsFlat({
     category: selectedCategory || undefined,
     city: selectedCity || undefined,
     minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,

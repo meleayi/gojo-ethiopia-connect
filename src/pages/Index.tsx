@@ -273,7 +273,7 @@ const Index = () => {
           <SectionHeader title="What Our Customers Say" subtitle="Real stories from real shoppers" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {reviews.map((review, i) => (
-              <ReviewCard key={review.id} review={review} index={i} />
+              <ReviewCard key={review.id} review={review as any} index={i} />
             ))}
           </div>
         </div>

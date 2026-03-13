@@ -30,8 +30,9 @@ const ProductDetail = () => {
   const wishlistIds = useWishlistIds();
   const toggleWishlist = useToggleWishlist();
   const { data: productReviews = [] } = useReviews(id!);
+  const categoryName = (product as any)?.categories?.name ?? undefined;
   const { data: relatedProducts = [] } = useProductsFlat({
-    category: product?.category ?? undefined,
+    category: categoryName,
     limit: 8,
   });
 
@@ -135,7 +136,7 @@ const ProductDetail = () => {
     );
   }
 
-  const description = product.description ?? `Experience this ${product.category ?? "product"} from Ethiopia.`;
+  const description = product.description ?? `Experience this ${categoryName ?? "product"} from Ethiopia.`;
   const specAttributes = product.product_attributes as any[] | undefined;
 
   return (
@@ -148,9 +149,9 @@ const ProductDetail = () => {
           <ChevronRight className="w-3 h-3" />
           <Link to="/products" className="hover:text-primary transition-colors">Products</Link>
           <ChevronRight className="w-3 h-3" />
-          {product.category && (
+          {categoryName && (
             <>
-              <Link to={`/products?category=${product.category}`} className="hover:text-primary transition-colors">{product.category}</Link>
+              <Link to={`/products?category=${categoryName}`} className="hover:text-primary transition-colors">{categoryName}</Link>
               <ChevronRight className="w-3 h-3" />
             </>
           )}
@@ -207,9 +208,9 @@ const ProductDetail = () => {
           {/* Right: Product Info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
             <div className="flex items-center gap-2 flex-wrap">
-              {product.category && (
-                <Link to={`/products?category=${product.category}`}>
-                  <Badge variant="outline" className="text-xs font-body hover:bg-muted transition-colors cursor-pointer">{product.category}</Badge>
+              {categoryName && (
+                <Link to={`/products?category=${categoryName}`}>
+                  <Badge variant="outline" className="text-xs font-body hover:bg-muted transition-colors cursor-pointer">{categoryName}</Badge>
                 </Link>
               )}
               {product.listing_type === "rent" && (
@@ -287,7 +288,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {product.listing_type !== "rent" && !["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") && (
+            {product.listing_type !== "rent" && !["Home Rent", "Home Sale", "Cars"].includes(categoryName ?? "") && (
               <div className="flex items-center gap-4">
                 <span className="text-sm font-body font-medium text-foreground">Quantity:</span>
                 <div className="flex items-center rounded-lg border border-input overflow-hidden">
@@ -315,10 +316,10 @@ const ProductDetail = () => {
                 data-testid="add-to-cart-btn"
               >
                 <ShoppingCart className="w-5 h-5" />
-                {["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") ? "Schedule Viewing" : "Add to Cart"}
+                {["Home Rent", "Home Sale", "Cars"].includes(categoryName ?? "") ? "Schedule Viewing" : "Add to Cart"}
               </Button>
               <Button variant="hero" size="xl" className="flex-1" data-testid="buy-now-btn">
-                {["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") ? "Contact Seller" : "Buy Now"}
+                {["Home Rent", "Home Sale", "Cars"].includes(categoryName ?? "") ? "Contact Seller" : "Buy Now"}
               </Button>
               <Button
                 variant="outline"
@@ -467,7 +468,7 @@ const ProductDetail = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-display text-xl font-bold text-foreground">You May Also Like</h2>
-                <p className="text-xs text-muted-foreground font-body mt-0.5">More from {product.category}</p>
+                <p className="text-xs text-muted-foreground font-body mt-0.5">More from {categoryName}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => scrollRec("left")} data-testid="rec-scroll-left">
@@ -476,7 +477,7 @@ const ProductDetail = () => {
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => scrollRec("right")} data-testid="rec-scroll-right">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
-                <Link to={`/products?category=${product.category}`}>
+                <Link to={`/products?category=${categoryName}`}>
                   <Button variant="outline" size="sm" className="text-xs">View all</Button>
                 </Link>
               </div>

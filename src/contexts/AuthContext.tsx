@@ -91,34 +91,88 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [fetchProfile]);
 
   const signUp = async ({ email, password, fullName, phone, role, sellerData }: SignUpParams) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, phone: phone ?? null, role },
-      },
-    });
-
-    if (error) return { error };
-
-    if (role === "seller" && sellerData && data.user) {
-      await supabase.from("seller_profiles").insert({
-        user_id: data.user.id,
-        company_name: sellerData.companyName,
-        contact_person: sellerData.contactPerson,
-        phone: sellerData.phone,
-        business_email: sellerData.businessEmail,
-        business_license: sellerData.businessLicense ?? null,
-        company_address: sellerData.companyAddress,
-        city: sellerData.city,
-        years_in_business: sellerData.yearsInBusiness ?? null,
-        status: "pending",
-        is_verified: false,
-        joined_date: new Date().toISOString().split("T")[0],
+    try {
+      console.log("[AUTH] Starting signup for:", { email, role });
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName, phone: phone ?? null, role },
+        },
       });
-    }
 
-    return { error: null };
+      if (error) {
+        console.error("[AUTH] Signup error:", error);
+        return { error };
+      }
+
+      console.log("[AUTH] Auth signup successful, user ID:", data.user?.id);
+
+      // Create profile entry
+      if (data.user) {
+        try {
+          console.log("[AUTH] Creating profile for user:", data.user.id);
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              id: data.user.id,
+              email: email,
+              full_name: fullName,
+              phone: phone ?? null,
+              role: role,
+              status: "active",
+            });
+
+          if (profileError) {
+            console.error("[AUTH] Profile creation error:", profileError);
+            return { error: profileError };
+          }
+          console.log("[AUTH] Profile created successfully");
+        } catch (profileErr) {
+          console.error("[AUTH] Profile creation exception:", profileErr);
+          return { error: profileErr as any };
+        }
+      }
+
+      // Create seller profile if applicable
+      if (role === "seller" && sellerData && data.user) {
+        try {
+          console.log("[AUTH] Creating seller profile for user:", data.user.id);
+          const { error: sellerError } = await supabase
+            .from("seller_profiles")
+            .insert({
+              user_id: data.user.id,
+              company_name: sellerData.companyName,
+              contact_person: sellerData.contactPerson,
+              phone: sellerData.phone,
+              business_email: sellerData.businessEmail,
+              business_license: sellerData.businessLicense ?? null,
+              company_address: sellerData.companyAddress,
+              city: sellerData.city,
+              years_in_business: sellerData.yearsInBusiness ?? null,
+              status: "pending",
+              is_verified: false,
+              joined_date: new Date().toISOString().split("T")[0],
+            });
+
+          if (sellerError) {
+            console.error("[AUTH] Seller profile creation error:", sellerError);
+            return { error: sellerError };
+          }
+          console.log("[AUTH] Seller profile created successfully");
+        } catch (sellerErr) {
+          console.error("[AUTH] Seller profile creation exception:", sellerErr);
+          return { error: sellerErr as any };
+        }
+      }
+
+      console.log("[AUTH] Signup completed successfully");
+      return { error: null };
+    } catch (err) {
+      console.error("[AUTH] Unexpected signup error:", err);
+      return { error: err as any };
+    }
   };
 
   const signIn = async (email: string, password: string) => {

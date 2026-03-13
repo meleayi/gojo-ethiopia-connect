@@ -208,9 +208,9 @@ const ProductDetail = () => {
           {/* Right: Product Info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-5">
             <div className="flex items-center gap-2 flex-wrap">
-              {product.category && (
-                <Link to={`/products?category=${product.category}`}>
-                  <Badge variant="outline" className="text-xs font-body hover:bg-muted transition-colors cursor-pointer">{product.category}</Badge>
+              {categoryName && (
+                <Link to={`/products?category=${categoryName}`}>
+                  <Badge variant="outline" className="text-xs font-body hover:bg-muted transition-colors cursor-pointer">{categoryName}</Badge>
                 </Link>
               )}
               {product.listing_type === "rent" && (

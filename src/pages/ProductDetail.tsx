@@ -136,7 +136,7 @@ const ProductDetail = () => {
     );
   }
 
-  const description = product.description ?? `Experience this ${product.category ?? "product"} from Ethiopia.`;
+  const description = product.description ?? `Experience this ${categoryName ?? "product"} from Ethiopia.`;
   const specAttributes = product.product_attributes as any[] | undefined;
 
   return (

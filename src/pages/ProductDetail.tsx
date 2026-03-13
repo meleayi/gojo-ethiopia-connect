@@ -288,7 +288,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {product.listing_type !== "rent" && !["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") && (
+            {product.listing_type !== "rent" && !["Home Rent", "Home Sale", "Cars"].includes(categoryName ?? "") && (
               <div className="flex items-center gap-4">
                 <span className="text-sm font-body font-medium text-foreground">Quantity:</span>
                 <div className="flex items-center rounded-lg border border-input overflow-hidden">

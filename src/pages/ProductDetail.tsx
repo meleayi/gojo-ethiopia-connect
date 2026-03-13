@@ -468,7 +468,7 @@ const ProductDetail = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-display text-xl font-bold text-foreground">You May Also Like</h2>
-                <p className="text-xs text-muted-foreground font-body mt-0.5">More from {product.category}</p>
+                <p className="text-xs text-muted-foreground font-body mt-0.5">More from {categoryName}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => scrollRec("left")} data-testid="rec-scroll-left">

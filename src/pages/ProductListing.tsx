@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useProductsFlat } from "@/hooks/useProducts";
+import { useProductsFlat, useProducts } from "@/hooks/useProducts";
 import { categories, ethiopianCities } from "@/data/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
 

@@ -12,7 +12,7 @@ import ReviewCard from "@/components/ReviewCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import heroBanner from "@/assets/hero-banner.jpg";
-import { categories } from "@/data/mock-data";
+import { categories, reviews } from "@/data/mock-data";
 import { useState } from "react";
 import { useProductsFlat } from "@/hooks/useProducts";
 import { useSellers } from "@/hooks/useSellers";

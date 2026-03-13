@@ -99,7 +99,7 @@ export const useProductsFlat = (filters: {
         `);
 
       const status = filters.status ?? "approved";
-      query = query.eq("status", status);
+      query = query.eq("status", status as any);
 
       if (filters.category) query = query.ilike("category", `%${filters.category}%`);
       if (filters.city) query = query.eq("city", filters.city);

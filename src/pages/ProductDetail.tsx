@@ -316,10 +316,10 @@ const ProductDetail = () => {
                 data-testid="add-to-cart-btn"
               >
                 <ShoppingCart className="w-5 h-5" />
-                {["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") ? "Schedule Viewing" : "Add to Cart"}
+                {["Home Rent", "Home Sale", "Cars"].includes(categoryName ?? "") ? "Schedule Viewing" : "Add to Cart"}
               </Button>
               <Button variant="hero" size="xl" className="flex-1" data-testid="buy-now-btn">
-                {["Home Rent", "Home Sale", "Cars"].includes(product.category ?? "") ? "Contact Seller" : "Buy Now"}
+                {["Home Rent", "Home Sale", "Cars"].includes(categoryName ?? "") ? "Contact Seller" : "Buy Now"}
               </Button>
               <Button
                 variant="outline"

@@ -39,8 +39,8 @@ export const useProducts = (filters: ProductFilters = {}) => {
         `)
         .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
 
-      if (filters.status) query = query.eq("status", filters.status);
-      else query = query.eq("status", "approved");
+      if (filters.status) query = query.eq("status", filters.status as any);
+      else query = query.eq("status", "approved" as any);
 
       if (filters.category) query = query.eq("category_id", filters.category);
       if (filters.city) query = query.eq("city", filters.city);

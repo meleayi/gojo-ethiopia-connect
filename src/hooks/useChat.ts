@@ -187,13 +187,15 @@ export const useSendMessage = () => {
 
       if (conv) {
         const isbuyer = conv.buyer_id === user.id;
+        // Simple increment - fetch current value and add 1
+        const currentCount = isbuyer ? (conv as any).seller_unread_count ?? 0 : (conv as any).buyer_unread_count ?? 0;
         await supabase
           .from("conversations")
           .update({
             last_message_at: new Date().toISOString(),
             ...(isbuyer
-              ? { seller_unread_count: supabase.rpc("increment" as never, { field: "seller_unread_count" } as never) }
-              : { buyer_unread_count: supabase.rpc("increment" as never, { field: "buyer_unread_count" } as never) }),
+              ? { seller_unread_count: currentCount + 1 }
+              : { buyer_unread_count: currentCount + 1 }),
           })
           .eq("id", conversationId);
       }

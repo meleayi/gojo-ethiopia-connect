@@ -123,14 +123,14 @@ export const useSendNotification = () => {
       data?: Record<string, unknown>;
       actionUrl?: string;
     }) => {
-      const { error } = await supabase.from("notifications").insert({
+      const { error } = await supabase.from("notifications").insert([{
         user_id: notification.userId,
         type: notification.type,
         title: notification.title,
         body: notification.body,
         data: notification.data ?? {},
         action_url: notification.actionUrl ?? null,
-      });
+      }]);
       if (error) throw error;
     },
   });

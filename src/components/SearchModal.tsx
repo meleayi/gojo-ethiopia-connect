@@ -172,14 +172,14 @@ const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                       {suggestions.map((item, i) => (
                         <button
                           key={item.id}
-                          onClick={() => handleSelect({ type: "product", id: item.id, label: item.name, sub: item.category, image: item.image, price: item.price })}
+                          onClick={() => handleSelect({ type: "product", id: item.id, label: item.name, sub: (item as any).categories?.name ?? "", image: (item.product_images as any)?.[0]?.url ?? "", price: item.price })}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors text-left ${focusedIndex === i ? "bg-muted" : ""}`}
                           data-testid={`search-suggestion-${item.id}`}
                         >
-                          <img src={item.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          <img src={(item.product_images as any)?.[0]?.url ?? ""} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-body font-medium text-foreground truncate">{highlight(item.name, debouncedQuery)}</p>
-                            <p className="text-xs text-muted-foreground">{item.category}</p>
+                            <p className="text-xs text-muted-foreground">{(item as any).categories?.name ?? ""}</p>
                           </div>
                           <span className="text-sm font-display font-bold text-primary flex-shrink-0">{item.price.toLocaleString()} ETB</span>
                         </button>
